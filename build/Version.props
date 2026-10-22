@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <!--
+    The one place the release version lives. The executable's version
+    resource and the installer (tools\Build-Installer.ps1) both read it.
+  -->
+  <PropertyGroup>
+    <ClaudeSwitcherVersion>1.0.0</ClaudeSwitcherVersion>
+  </PropertyGroup>
+  <PropertyGroup>
+    <ClaudeSwitcherVersionCommas>$(ClaudeSwitcherVersion.Replace('.', ',')),0</ClaudeSwitcherVersionCommas>
+  </PropertyGroup>
+</Project>

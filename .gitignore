@@ -6,3 +6,4 @@ packages/
 *.user
 *.aps
 *.log
+installer/Output/

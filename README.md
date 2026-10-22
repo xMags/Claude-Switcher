@@ -115,9 +115,23 @@ $msbuild = & $vswhere `
 & ".\x64\Release\ClaudeSwitcher\ClaudeSwitcher.exe"
 ```
 
-Claude Switcher is unpackaged and carries its own Windows App SDK runtime, so it runs straight from the build output. There is no package to register and no installer yet. The `x64\Release\ClaudeSwitcher` folder can be copied anywhere and run as is.
+Claude Switcher is unpackaged and carries its own Windows App SDK runtime, so it runs straight from the build output. There is no package to register, and the `x64\Release\ClaudeSwitcher` folder can be copied anywhere and run as is.
 
 `CoreTests.exe` covers the parts that are easy to get subtly wrong: Chromium switch parsing, argument quoting, profile validation, the profile store, settings, shortcut files and the startup registration. It prints one line per test group and exits non-zero on failure.
+
+## Building the installer
+
+```powershell
+& ".\tools\Build-Installer.ps1"
+```
+
+This restores packages, builds Release, runs `CoreTests.exe`, checks that every binary in the output depends only on files beside it or on Windows itself (and never on the Visual C++ runtime), then compiles `installer/ClaudeSwitcher.iss` with [Inno Setup 6](https://jrsoftware.org/isdl.php). The result is `installer/Output/ClaudeSwitcher-<version>-Setup.exe`, and the script prints its SHA-256. Add `-SkipBuild` to package an existing Release output; the tests and the dependency check still run.
+
+The version lives in one place, `build/Version.props`. It is stamped into `ClaudeSwitcher.exe`, and the build stops if the two ever disagree.
+
+The installer is all-users: it asks for administrator rights and installs to `Program Files\Claude Switcher`. It adds a Start menu shortcut, offers an optional desktop shortcut, and closes a running copy (even one hidden in the tray) before upgrading or uninstalling. Uninstalling removes the "Start with Windows" entry and asks before deleting the switcher's settings. It never touches `%USERPROFILE%\ClaudeProfiles`, because those folders hold your Claude sign-ins.
+
+The installer is unsigned, so Windows SmartScreen shows an unknown-publisher warning on first run. Choose "More info", then "Run anyway".
 
 ## Where things live
 
@@ -154,9 +168,11 @@ Claude Switcher/
 |   |-- Views/               WinUI pages and dialogs
 |   `-- Assets/              App icon
 |-- tests/CoreTests/         Console tests for the Core library
+|-- tools/                   Installer build and dependency check
+|-- installer/               Inno Setup script (output is ignored)
 |-- docs/images/             README images
 |-- licenses/                Third-party license and notice files
-|-- build/                   Shared MSBuild settings
+|-- build/                   Shared MSBuild settings and the version number
 `-- packages/                Restored NuGet packages, intentionally ignored
 ```
 
