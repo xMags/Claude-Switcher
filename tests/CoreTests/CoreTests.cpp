@@ -454,20 +454,22 @@ namespace
     void TestAppSettings()
     {
         auto const defaults = core::ParseAppSettings(L"not json");
-        Require(defaults.Theme == core::ThemePreference::System && !defaults.MinimizeToTray, "garbage falls back to defaults");
+        Require(defaults.Theme == core::ThemePreference::System && !defaults.CloseToTray, "garbage falls back to defaults");
 
-        auto const parsed = core::ParseAppSettings(LR"({"theme":"dark","minimizeToTray":true})");
-        Require(parsed.Theme == core::ThemePreference::Dark && parsed.MinimizeToTray, "known values are read");
+        auto const parsed = core::ParseAppSettings(LR"({"theme":"dark","closeToTray":true})");
+        Require(parsed.Theme == core::ThemePreference::Dark && parsed.CloseToTray, "known values are read");
         Require(core::ParseAppSettings(LR"({"theme":"purple"})").Theme == core::ThemePreference::System, "an unknown theme means system");
-        Require(!core::ParseAppSettings(LR"({"minimizeToTray":"yes"})").MinimizeToTray, "a wrongly typed value is ignored");
+        Require(!core::ParseAppSettings(LR"({"closeToTray":"yes"})").CloseToTray, "a wrongly typed value is ignored");
+        Require(core::ParseAppSettings(LR"({"minimizeToTray":true})").CloseToTray, "the setting's earlier name is still read");
+        Require(!core::ParseAppSettings(LR"({"closeToTray":false,"minimizeToTray":true})").CloseToTray, "the current name wins");
 
         for (auto const theme : { core::ThemePreference::System, core::ThemePreference::Light, core::ThemePreference::Dark })
         {
             core::AppSettings settings;
             settings.Theme = theme;
-            settings.MinimizeToTray = theme == core::ThemePreference::Light;
+            settings.CloseToTray = theme == core::ThemePreference::Light;
             auto const back = core::ParseAppSettings(core::SerializeAppSettings(settings));
-            Require(back.Theme == settings.Theme && back.MinimizeToTray == settings.MinimizeToTray, "settings round-trip");
+            Require(back.Theme == settings.Theme && back.CloseToTray == settings.CloseToTray, "settings round-trip");
         }
 
         TemporaryFolder folder;
@@ -475,10 +477,10 @@ namespace
         Require(store.Load().Theme == core::ThemePreference::System, "a missing file loads defaults");
         core::AppSettings saved;
         saved.Theme = core::ThemePreference::Light;
-        saved.MinimizeToTray = true;
+        saved.CloseToTray = true;
         store.Save(saved);
         auto const loaded = store.Load();
-        Require(loaded.Theme == core::ThemePreference::Light && loaded.MinimizeToTray, "saved settings load back");
+        Require(loaded.Theme == core::ThemePreference::Light && loaded.CloseToTray, "saved settings load back");
         WriteBytes(folder.Path() / L"sub" / L"settings.json", "\xFF\xFE garbage");
         Require(store.Load().Theme == core::ThemePreference::System, "an unreadable file loads defaults");
     }

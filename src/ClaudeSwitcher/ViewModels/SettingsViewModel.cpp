@@ -63,20 +63,20 @@ namespace winrt::ClaudeSwitcher::implementation
         Raise(L"ThemeIndex");
     }
 
-    bool SettingsViewModel::MinimizeToTray() const noexcept
+    bool SettingsViewModel::CloseToTray() const noexcept
     {
-        return m_settings.MinimizeToTray;
+        return m_settings.CloseToTray;
     }
 
-    void SettingsViewModel::MinimizeToTray(bool value)
+    void SettingsViewModel::CloseToTray(bool value)
     {
-        if (value == m_settings.MinimizeToTray)
+        if (value == m_settings.CloseToTray)
         {
             return;
         }
-        m_settings.MinimizeToTray = value;
+        m_settings.CloseToTray = value;
         Persist();
-        Raise(L"MinimizeToTray");
+        Raise(L"CloseToTray");
     }
 
     bool SettingsViewModel::StartWithWindows() const noexcept

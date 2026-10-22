@@ -77,7 +77,7 @@
                     <TextBlock
                         Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                         Style="{StaticResource CaptionTextBlockStyle}"
-                        Text="Opens Claude Switcher when you sign in. With Minimize to tray on, it starts in the tray instead of showing a window."
+                        Text="Opens Claude Switcher when you sign in. With Close to tray on, it starts in the tray instead of showing a window."
                         TextWrapping="Wrap" />
                 </StackPanel>
                 <ToggleSwitch
@@ -95,21 +95,21 @@
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
-                <FontIcon VerticalAlignment="Center" Glyph="&#xE921;" />
+                <FontIcon VerticalAlignment="Center" Glyph="&#xE8BB;" />
                 <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                    <TextBlock Text="Minimize to tray" />
+                    <TextBlock Text="Close to tray" />
                     <TextBlock
                         Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                         Style="{StaticResource CaptionTextBlockStyle}"
-                        Text="Minimizing hides the window in the notification area. Click the tray icon to bring it back; right-click it to quit."
+                        Text="The close button hides the window in the notification area instead of quitting. Click the tray icon to bring it back; right-click it and choose Quit to exit."
                         TextWrapping="Wrap" />
                 </StackPanel>
                 <ToggleSwitch
                     Grid.Column="2"
                     MinWidth="0"
                     VerticalAlignment="Center"
-                    AutomationProperties.Name="Minimize to tray"
-                    IsOn="{x:Bind ViewModel.MinimizeToTray, Mode=TwoWay}"
+                    AutomationProperties.Name="Close to tray"
+                    IsOn="{x:Bind ViewModel.CloseToTray, Mode=TwoWay}"
                     OffContent=""
                     OnContent="" />
             </Grid>

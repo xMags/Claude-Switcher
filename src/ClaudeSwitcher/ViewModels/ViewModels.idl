@@ -14,7 +14,7 @@ namespace ClaudeSwitcher
         Boolean CanLaunch { get; };
         String PrimaryActionText { get; };
         Microsoft.UI.Xaml.Visibility RunningVisibility { get; };
-        // Edit, shortcut and delete apply to saved profiles only.
+        // Edit, Start menu entry and delete apply to saved profiles only.
         Microsoft.UI.Xaml.Visibility ManageVisibility { get; };
     }
 
@@ -55,7 +55,7 @@ namespace ClaudeSwitcher
     {
         // 0 = follow Windows, 1 = light, 2 = dark.
         Int32 ThemeIndex;
-        Boolean MinimizeToTray;
+        Boolean CloseToTray;
         Boolean StartWithWindows;
 
         Boolean IsErrorOpen { get; };

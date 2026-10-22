@@ -4,6 +4,7 @@
 
 #include "Shell/TrayIcon.h"
 
+#include <winrt/Microsoft.UI.Windowing.h>
 #include <winrt/Microsoft.UI.Xaml.Controls.h>
 
 #include <memory>
@@ -32,6 +33,7 @@ namespace winrt::ClaudeSwitcher::implementation
         void ApplyTheme();
         void ApplyTrayPreference();
         void OnWindowStateChanged();
+        void OnClosing(Microsoft::UI::Windowing::AppWindowClosingEventArgs const& args);
         void UpdatePolling();
         void RestoreWindow();
         void Quit();
@@ -45,6 +47,9 @@ namespace winrt::ClaudeSwitcher::implementation
         winrt::event_token m_closedToken{};
         winrt::event_token m_appWindowChangedToken{};
         winrt::event_token m_settingsChangedToken{};
+        winrt::event_token m_closingToken{};
+        // Set by Quit, so the close that follows is not turned into a hide.
+        bool m_quitting = false;
     };
 }
 

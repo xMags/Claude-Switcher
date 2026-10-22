@@ -18,7 +18,8 @@ namespace ClaudeSwitcher::Core
     struct AppSettings
     {
         ThemePreference Theme = ThemePreference::System;
-        bool MinimizeToTray = false;
+        // The window's close button hides it in the tray instead of quitting.
+        bool CloseToTray = false;
     };
 
     // Lenient on purpose: these are preferences, not data, so anything

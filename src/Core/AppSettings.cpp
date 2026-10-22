@@ -55,9 +55,14 @@ namespace ClaudeSwitcher::Core
                 settings.Theme = ThemePreference::Dark;
             }
         }
-        if (auto const tray = root.TryLookup(L"minimizeToTray"); tray && tray.ValueType() == JsonValueType::Boolean)
+        // "minimizeToTray" is the name this setting had in the first build.
+        for (auto const key : { L"closeToTray", L"minimizeToTray" })
         {
-            settings.MinimizeToTray = tray.GetBoolean();
+            if (auto const tray = root.TryLookup(key); tray && tray.ValueType() == JsonValueType::Boolean)
+            {
+                settings.CloseToTray = tray.GetBoolean();
+                break;
+            }
         }
         return settings;
     }
@@ -67,7 +72,7 @@ namespace ClaudeSwitcher::Core
         JsonObject root;
         root.Insert(L"schemaVersion", JsonValue::CreateNumberValue(1));
         root.Insert(L"theme", JsonValue::CreateStringValue(ThemeName(settings.Theme)));
-        root.Insert(L"minimizeToTray", JsonValue::CreateBooleanValue(settings.MinimizeToTray));
+        root.Insert(L"closeToTray", JsonValue::CreateBooleanValue(settings.CloseToTray));
         return std::wstring{ root.Stringify() };
     }
 

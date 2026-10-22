@@ -85,7 +85,7 @@ namespace winrt::ClaudeSwitcher::implementation
                 });
             },
         });
-        m_tray->SetVisible(winrt::get_self<SettingsViewModel>(m_settings)->Current().MinimizeToTray);
+        m_tray->SetVisible(winrt::get_self<SettingsViewModel>(m_settings)->Current().CloseToTray);
 
         m_settingsChangedToken = m_settings.PropertyChanged(
             [weak = get_weak()]([[maybe_unused]] auto const& sender, Microsoft::UI::Xaml::Data::PropertyChangedEventArgs const& args)
@@ -100,7 +100,7 @@ namespace winrt::ClaudeSwitcher::implementation
                 {
                     self->ApplyTheme();
                 }
-                else if (name == L"MinimizeToTray")
+                else if (name == L"CloseToTray")
                 {
                     self->ApplyTrayPreference();
                 }
@@ -130,6 +130,15 @@ namespace winrt::ClaudeSwitcher::implementation
                 }
             });
 
+        m_closingToken = AppWindow().Closing(
+            [weak = get_weak()]([[maybe_unused]] auto const& sender, Microsoft::UI::Windowing::AppWindowClosingEventArgs const& args)
+            {
+                if (auto const self = weak.get())
+                {
+                    self->OnClosing(args);
+                }
+            });
+
         m_closedToken = Closed(
             [weak = get_weak()]([[maybe_unused]] auto const& sender, [[maybe_unused]] auto const& args)
             {
@@ -137,8 +146,15 @@ namespace winrt::ClaudeSwitcher::implementation
                 {
                     self->m_profiles.SetStatusUpdatesPaused(true);
                     self->AppWindow().Changed(self->m_appWindowChangedToken);
+                    self->AppWindow().Closing(self->m_closingToken);
                     self->m_settings.PropertyChanged(self->m_settingsChangedToken);
                     self->m_tray.reset();
+                    // The window object outlives the XAML framework (the app
+                    // keeps it until exit), so it must not keep pages alive:
+                    // releasing XAML elements after shutdown crashes.
+                    self->PageHost().Child(nullptr);
+                    self->m_homePage = nullptr;
+                    self->m_settingsPage = nullptr;
                 }
             });
     }
@@ -153,7 +169,7 @@ namespace winrt::ClaudeSwitcher::implementation
         }
 
         auto const& settings = winrt::get_self<SettingsViewModel>(m_settings)->Current();
-        if (!settings.MinimizeToTray)
+        if (!settings.CloseToTray)
         {
             // Appears on the taskbar without taking focus from whatever the
             // user opened first after signing in.
@@ -225,7 +241,7 @@ namespace winrt::ClaudeSwitcher::implementation
 
     void MainWindow::ApplyTrayPreference()
     {
-        auto const enabled = winrt::get_self<SettingsViewModel>(m_settings)->Current().MinimizeToTray;
+        auto const enabled = winrt::get_self<SettingsViewModel>(m_settings)->Current().CloseToTray;
         if (m_tray)
         {
             m_tray->SetVisible(enabled);
@@ -240,13 +256,19 @@ namespace winrt::ClaudeSwitcher::implementation
 
     void MainWindow::OnWindowStateChanged()
     {
-        auto const presenter = AppWindow().Presenter().try_as<OverlappedPresenter>();
-        auto const minimized = presenter && presenter.State() == OverlappedPresenterState::Minimized;
-        if (minimized && AppWindow().IsVisible() && winrt::get_self<SettingsViewModel>(m_settings)->Current().MinimizeToTray)
+        UpdatePolling();
+    }
+
+    void MainWindow::OnClosing(Microsoft::UI::Windowing::AppWindowClosingEventArgs const& args)
+    {
+        if (m_quitting || !winrt::get_self<SettingsViewModel>(m_settings)->Current().CloseToTray)
         {
-            // Hiding removes the taskbar button; the tray icon brings it back.
-            AppWindow().Hide();
+            return;
         }
+        // The close button only hides the window; Quit in the tray menu exits.
+        // Hiding also removes the taskbar button.
+        args.Cancel(true);
+        AppWindow().Hide();
         UpdatePolling();
     }
 
@@ -276,6 +298,7 @@ namespace winrt::ClaudeSwitcher::implementation
 
     void MainWindow::Quit()
     {
+        m_quitting = true;
         Close();
     }
 }

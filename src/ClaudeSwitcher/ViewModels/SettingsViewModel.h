@@ -23,8 +23,8 @@ namespace winrt::ClaudeSwitcher::implementation
 
         [[nodiscard]] std::int32_t ThemeIndex() const noexcept;
         void ThemeIndex(std::int32_t value);
-        [[nodiscard]] bool MinimizeToTray() const noexcept;
-        void MinimizeToTray(bool value);
+        [[nodiscard]] bool CloseToTray() const noexcept;
+        void CloseToTray(bool value);
         [[nodiscard]] bool StartWithWindows() const noexcept;
         void StartWithWindows(bool value);
 
