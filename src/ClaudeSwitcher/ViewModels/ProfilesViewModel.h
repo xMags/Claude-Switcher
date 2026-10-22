@@ -31,6 +31,10 @@ namespace winrt::ClaudeSwitcher::implementation
         ProfilesViewModel(
             std::shared_ptr<::ClaudeSwitcher::Core::ProfileCatalog> catalog,
             Microsoft::UI::Dispatching::DispatcherQueue queue);
+        ~ProfilesViewModel();
+
+        ProfilesViewModel(ProfilesViewModel const&) = delete;
+        ProfilesViewModel& operator=(ProfilesViewModel const&) = delete;
 
         [[nodiscard]] winrt::Windows::Foundation::Collections::IObservableVector<winrt::ClaudeSwitcher::ProfileCardViewModel> Cards() const;
         [[nodiscard]] winrt::hstring StatusText() const;
@@ -113,6 +117,11 @@ namespace winrt::ClaudeSwitcher::implementation
         winrt::hstring m_messageTitle;
         winrt::hstring m_messageText;
         Microsoft::UI::Xaml::Controls::InfoBarSeverity m_messageSeverity = Microsoft::UI::Xaml::Controls::InfoBarSeverity::Informational;
+        // Closes confirmations after a few seconds; generations stop an older
+        // timer from closing a newer message.
+        Microsoft::UI::Dispatching::DispatcherQueueTimer m_messageTimer{ nullptr };
+        std::uint64_t m_messageGeneration = 0;
+        std::uint64_t m_timedMessageGeneration = 0;
         winrt::event<Microsoft::UI::Xaml::Data::PropertyChangedEventHandler> m_propertyChanged;
     };
 }

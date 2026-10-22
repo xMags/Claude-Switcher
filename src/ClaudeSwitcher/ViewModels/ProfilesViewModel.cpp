@@ -15,6 +15,7 @@
 
 #include <shellapi.h>
 
+#include <chrono>
 #include <system_error>
 #include <utility>
 
@@ -27,6 +28,7 @@ namespace winrt::ClaudeSwitcher::implementation
 
         constexpr wchar_t DefaultCardId[] = L"default";
         constexpr wchar_t DefaultCardColor[] = L"#D97757";
+        constexpr std::chrono::seconds MessageLifetime{ 6 };
 
         winrt::hstring DescribeError(std::system_error const& error)
         {
@@ -679,6 +681,42 @@ namespace winrt::ClaudeSwitcher::implementation
         // InfoBar itself reappears.
         m_messageOpen = true;
         Raise(L"IsMessageOpen");
+
+        // Confirmations fade out by themselves; warnings and errors stay
+        // until closed, because they usually ask the user to do something.
+        ++m_messageGeneration;
+        if (m_messageTimer)
+        {
+            m_messageTimer.Stop();
+        }
+        if (severity != InfoBarSeverity::Success && severity != InfoBarSeverity::Informational)
+        {
+            return;
+        }
+        if (!m_messageTimer)
+        {
+            m_messageTimer = m_queue.CreateTimer();
+            m_messageTimer.IsRepeating(false);
+            m_messageTimer.Interval(MessageLifetime);
+            // The timer is stopped in the destructor, so this cannot outlive it.
+            m_messageTimer.Tick([this](auto&&, auto&&) {
+                // A newer message restarted the timer; only the latest one closes.
+                if (m_messageGeneration == m_timedMessageGeneration)
+                {
+                    DismissMessage();
+                }
+            });
+        }
+        m_timedMessageGeneration = m_messageGeneration;
+        m_messageTimer.Start();
+    }
+
+    ProfilesViewModel::~ProfilesViewModel()
+    {
+        if (m_messageTimer)
+        {
+            m_messageTimer.Stop();
+        }
     }
 
     void ProfilesViewModel::EnsurePoller()
