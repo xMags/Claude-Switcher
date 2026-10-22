@@ -1,0 +1,8 @@
+<Solution>
+  <Configurations>
+    <Platform Name="x64" />
+  </Configurations>
+  <Project Path="src/Core/Core.vcxproj" />
+  <Project Path="src/ClaudeSwitcher/ClaudeSwitcher.vcxproj" />
+  <Project Path="tests/CoreTests/CoreTests.vcxproj" />
+</Solution>

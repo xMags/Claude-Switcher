@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="..\..\packages\Microsoft.Windows.CppWinRT.3.0.260818.1\build\native\Microsoft.Windows.CppWinRT.props" Condition="Exists('..\..\packages\Microsoft.Windows.CppWinRT.3.0.260818.1\build\native\Microsoft.Windows.CppWinRT.props')" />
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{382c2d5b-6b1c-4f17-a4f7-4982bdc1410e}</ProjectGuid>
+    <RootNamespace>Core</RootNamespace>
+    <ProjectName>Core</ProjectName>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+    <CppWinRTOptimized>true</CppWinRTOptimized>
+    <MinimalCoreWin>true</MinimalCoreWin>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <PlatformToolset>v145</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)'=='Debug'" Label="Configuration">
+    <UseDebugLibraries>true</UseDebugLibraries>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)'=='Release'" Label="Configuration">
+    <UseDebugLibraries>false</UseDebugLibraries>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <Import Project="..\..\build\HybridCRT.props" />
+  <Import Project="..\..\build\Common.props" />
+  <PropertyGroup Condition="'$(Configuration)'=='Debug'">
+    <LinkIncremental>true</LinkIncremental>
+  </PropertyGroup>
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <TreatWarningAsError>true</TreatWarningAsError>
+    </ClCompile>
+
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClInclude Include="ClaudeInstallLocator.h" />
+    <ClInclude Include="ClaudeLauncher.h" />
+    <ClInclude Include="CommandLineParsing.h" />
+    <ClInclude Include="KnownFolders.h" />
+    <ClInclude Include="OrdinalText.h" />
+    <ClInclude Include="ProcessScanner.h" />
+    <ClInclude Include="ProfileCatalog.h" />
+    <ClInclude Include="ProfileFolders.h" />
+    <ClInclude Include="ProfileStore.h" />
+    <ClInclude Include="ProfileValidation.h" />
+    <ClInclude Include="ShortcutWriter.h" />
+    <ClInclude Include="SystemError.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="ClaudeInstallLocator.cpp" />
+    <ClCompile Include="ClaudeLauncher.cpp" />
+    <ClCompile Include="CommandLineParsing.cpp" />
+    <ClCompile Include="KnownFolders.cpp" />
+    <ClCompile Include="OrdinalText.cpp" />
+    <ClCompile Include="ProcessScanner.cpp" />
+    <ClCompile Include="ProfileCatalog.cpp" />
+    <ClCompile Include="ProfileFolders.cpp" />
+    <ClCompile Include="ProfileStore.cpp" />
+    <ClCompile Include="ProfileValidation.cpp" />
+    <ClCompile Include="ShortcutWriter.cpp" />
+    <ClCompile Include="SystemError.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="packages.config" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+    <Import Project="..\..\packages\Microsoft.Windows.CppWinRT.3.0.260818.1\build\native\Microsoft.Windows.CppWinRT.targets" Condition="Exists('..\..\packages\Microsoft.Windows.CppWinRT.3.0.260818.1\build\native\Microsoft.Windows.CppWinRT.targets')" />
+    <Import Project="..\..\packages\Microsoft.Windows.ImplementationLibrary.1.0.260126.7\build\native\Microsoft.Windows.ImplementationLibrary.targets" Condition="Exists('..\..\packages\Microsoft.Windows.ImplementationLibrary.1.0.260126.7\build\native\Microsoft.Windows.ImplementationLibrary.targets')" />
+  </ImportGroup>
+  <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
+    <Error Condition="!Exists('..\..\packages\Microsoft.Windows.CppWinRT.3.0.260818.1\build\native\Microsoft.Windows.CppWinRT.targets')" Text="NuGet packages are missing. Restore them first (see README)." />
+    <Error Condition="!Exists('..\..\packages\Microsoft.Windows.ImplementationLibrary.1.0.260126.7\build\native\Microsoft.Windows.ImplementationLibrary.targets')" Text="NuGet packages are missing. Restore them first (see README)." />
+  </Target>
+</Project>
