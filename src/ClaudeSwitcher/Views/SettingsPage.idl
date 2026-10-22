@@ -1,0 +1,11 @@
+import "ViewModels/ViewModels.idl";
+
+namespace ClaudeSwitcher
+{
+    [default_interface]
+    runtimeclass SettingsPage : Microsoft.UI.Xaml.Controls.Page
+    {
+        SettingsPage(SettingsViewModel viewModel);
+        SettingsViewModel ViewModel { get; };
+    }
+}

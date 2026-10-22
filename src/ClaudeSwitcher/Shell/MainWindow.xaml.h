@@ -2,25 +2,49 @@
 
 #include "MainWindow.g.h"
 
+#include "Shell/TrayIcon.h"
+
+#include <winrt/Microsoft.UI.Xaml.Controls.h>
+
+#include <memory>
+
 namespace winrt::ClaudeSwitcher::implementation
 {
-    // Window lifecycle and shell layout only: hosts the profiles page and
-    // tells the view model when status polling is worth doing.
+    // Window lifecycle and shell layout: the side panel, theme, tray and
+    // minimized state. Page content lives in the pages and their view models.
     struct MainWindow : MainWindowT<MainWindow>
     {
-        explicit MainWindow(winrt::ClaudeSwitcher::ProfilesViewModel viewModel);
+        MainWindow(winrt::ClaudeSwitcher::ProfilesViewModel profiles, winrt::ClaudeSwitcher::SettingsViewModel settings);
 
         void InitializeComponent();
+
+        // Shows the window. A start at Windows sign-in stays out of the way
+        // instead: in the tray when that is on, otherwise minimized.
+        void Start(bool launchedAtSignIn);
+
+        void OnNavigationSelectionChanged(
+            Microsoft::UI::Xaml::Controls::NavigationView const& sender,
+            Microsoft::UI::Xaml::Controls::NavigationViewSelectionChangedEventArgs const& args);
 
     private:
         [[nodiscard]] HWND WindowHandle() const;
         void ApplyInitialSize(HWND window);
-        void UpdatePollingForWindowState();
+        void ApplyTheme();
+        void ApplyTrayPreference();
+        void OnWindowStateChanged();
+        void UpdatePolling();
+        void RestoreWindow();
+        void Quit();
 
-        winrt::ClaudeSwitcher::ProfilesViewModel m_viewModel;
+        winrt::ClaudeSwitcher::ProfilesViewModel m_profiles;
+        winrt::ClaudeSwitcher::SettingsViewModel m_settings;
+        winrt::ClaudeSwitcher::ProfilesPage m_homePage{ nullptr };
+        winrt::ClaudeSwitcher::SettingsPage m_settingsPage{ nullptr };
+        std::unique_ptr<::ClaudeSwitcher::Shell::TrayIcon> m_tray;
         winrt::event_token m_activatedToken{};
         winrt::event_token m_closedToken{};
         winrt::event_token m_appWindowChangedToken{};
+        winrt::event_token m_settingsChangedToken{};
     };
 }
 

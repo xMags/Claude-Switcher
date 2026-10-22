@@ -1,4 +1,6 @@
+#include "Core/AppSettings.h"
 #include "Core/ClaudeLauncher.h"
+#include "Core/StartupRegistration.h"
 #include "Core/CommandLineParsing.h"
 #include "Core/ProfileCatalog.h"
 #include "Core/ProfileFolders.h"
@@ -449,6 +451,81 @@ namespace
         Require(!core::ReadShortcutArguments(notShortcut), "a file that is not a shortcut has no arguments");
     }
 
+    void TestAppSettings()
+    {
+        auto const defaults = core::ParseAppSettings(L"not json");
+        Require(defaults.Theme == core::ThemePreference::System && !defaults.MinimizeToTray, "garbage falls back to defaults");
+
+        auto const parsed = core::ParseAppSettings(LR"({"theme":"dark","minimizeToTray":true})");
+        Require(parsed.Theme == core::ThemePreference::Dark && parsed.MinimizeToTray, "known values are read");
+        Require(core::ParseAppSettings(LR"({"theme":"purple"})").Theme == core::ThemePreference::System, "an unknown theme means system");
+        Require(!core::ParseAppSettings(LR"({"minimizeToTray":"yes"})").MinimizeToTray, "a wrongly typed value is ignored");
+
+        for (auto const theme : { core::ThemePreference::System, core::ThemePreference::Light, core::ThemePreference::Dark })
+        {
+            core::AppSettings settings;
+            settings.Theme = theme;
+            settings.MinimizeToTray = theme == core::ThemePreference::Light;
+            auto const back = core::ParseAppSettings(core::SerializeAppSettings(settings));
+            Require(back.Theme == settings.Theme && back.MinimizeToTray == settings.MinimizeToTray, "settings round-trip");
+        }
+
+        TemporaryFolder folder;
+        core::AppSettingsStore store{ folder.Path() / L"sub" / L"settings.json" };
+        Require(store.Load().Theme == core::ThemePreference::System, "a missing file loads defaults");
+        core::AppSettings saved;
+        saved.Theme = core::ThemePreference::Light;
+        saved.MinimizeToTray = true;
+        store.Save(saved);
+        auto const loaded = store.Load();
+        Require(loaded.Theme == core::ThemePreference::Light && loaded.MinimizeToTray, "saved settings load back");
+        WriteBytes(folder.Path() / L"sub" / L"settings.json", "\xFF\xFE garbage");
+        Require(store.Load().Theme == core::ThemePreference::System, "an unreadable file loads defaults");
+    }
+
+    void TestStartupRegistration()
+    {
+        auto const commandLine = core::BuildStartupCommand(LR"(C:\Program Files\Claude Switcher\ClaudeSwitcher.exe)");
+        auto const arguments = core::SplitCommandLine(commandLine);
+        Require(arguments.size() == 2 && arguments[0] == LR"(C:\Program Files\Claude Switcher\ClaudeSwitcher.exe)" &&
+                    arguments[1] == core::StartupSwitch,
+                "the startup command quotes the path and adds the switch");
+
+        // A scratch key in HKCU so the real Run key is never touched.
+        auto const root = L"Software\\ClaudeSwitcherTests-" + std::to_wstring(GetCurrentProcessId());
+        auto const cleanup = [&root] { RegDeleteTreeW(HKEY_CURRENT_USER, root.c_str()); };
+        cleanup();
+        core::StartupRegistration registration{ root + L"\\Run", root + L"\\Approved", L"ClaudeSwitcher" };
+        try
+        {
+            Require(!registration.IsEnabled() && !registration.RegisteredCommand(), "nothing is registered at first");
+            registration.Disable();
+            Require(!registration.IsEnabled(), "disabling when absent is harmless");
+
+            registration.Enable(commandLine);
+            Require(registration.IsEnabled(), "enabling registers");
+            Require(registration.RegisteredCommand() == commandLine, "the command is stored exactly");
+
+            // What Windows writes when the app is switched off in Settings > Apps > Startup.
+            BYTE disabled[12]{ 0x03 };
+            Require(RegSetKeyValueW(HKEY_CURRENT_USER, (root + L"\\Approved").c_str(), L"ClaudeSwitcher", REG_BINARY, disabled, sizeof(disabled)) ==
+                        ERROR_SUCCESS,
+                    "test fixture written");
+            Require(!registration.IsEnabled(), "a switch-off in Windows settings is respected");
+            registration.Enable(commandLine);
+            Require(registration.IsEnabled(), "enabling again clears the switch-off");
+
+            registration.Disable();
+            Require(!registration.IsEnabled() && !registration.RegisteredCommand(), "disabling removes the entry");
+        }
+        catch (...)
+        {
+            cleanup();
+            throw;
+        }
+        cleanup();
+    }
+
     struct TestCase
     {
         char const* Name;
@@ -474,6 +551,8 @@ int wmain()
         { "profiles root rules", TestRootRules },
         { "shortcut names", TestShortcutNames },
         { "shortcut files", TestShortcutFiles },
+        { "app settings", TestAppSettings },
+        { "startup registration", TestStartupRegistration },
     };
 
     auto failures = 0;

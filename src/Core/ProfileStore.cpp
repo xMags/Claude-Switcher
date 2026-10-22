@@ -3,10 +3,10 @@
 #include "Core/OrdinalText.h"
 #include "Core/ProfileValidation.h"
 #include "Core/SystemError.h"
+#include "Core/Utf8File.h"
 
 #include <windows.h>
 
-#include <wil/resource.h>
 #include <winrt/Windows.Data.Json.h>
 #include <winrt/Windows.Foundation.Collections.h>
 
@@ -27,7 +27,7 @@ namespace ClaudeSwitcher::Core
 
         // The list holds a handful of short records; anything near this size
         // is not a file this app wrote.
-        constexpr DWORD MaxFileBytes = 1024 * 1024;
+        constexpr std::uint32_t MaxFileBytes = 1024 * 1024;
         constexpr std::size_t MaxProfiles = 100;
         constexpr std::size_t MaxIdLength = 64;
         constexpr std::size_t MaxRootLength = 1024;
@@ -124,107 +124,6 @@ namespace ClaudeSwitcher::Core
                 }
             }
             return false;
-        }
-
-        std::optional<std::wstring> DecodeUtf8(std::string_view bytes)
-        {
-            constexpr std::string_view Bom = "\xEF\xBB\xBF";
-            if (bytes.substr(0, Bom.size()) == Bom)
-            {
-                bytes.remove_prefix(Bom.size());
-            }
-            if (bytes.empty())
-            {
-                return std::wstring{};
-            }
-
-            auto const inputLength = static_cast<int>(bytes.size()); // Bounded by MaxFileBytes.
-            auto const required = MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS, bytes.data(), inputLength, nullptr, 0);
-            if (required <= 0)
-            {
-                return std::nullopt;
-            }
-            std::wstring text(static_cast<std::size_t>(required), L'\0');
-            if (MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS, bytes.data(), inputLength, text.data(), required) != required)
-            {
-                return std::nullopt;
-            }
-            return text;
-        }
-
-        std::string EncodeUtf8(std::wstring_view text)
-        {
-            if (text.empty())
-            {
-                return {};
-            }
-            if (text.size() > static_cast<std::size_t>(std::numeric_limits<int>::max()))
-            {
-                ThrowWin32Error(ERROR_ARITHMETIC_OVERFLOW, "Encoding the profile list");
-            }
-
-            auto const inputLength = static_cast<int>(text.size());
-            auto const required = WideCharToMultiByte(CP_UTF8, WC_ERR_INVALID_CHARS, text.data(), inputLength, nullptr, 0, nullptr, nullptr);
-            if (required <= 0)
-            {
-                ThrowLastWin32Error("Encoding the profile list");
-            }
-            std::string bytes(static_cast<std::size_t>(required), '\0');
-            if (WideCharToMultiByte(CP_UTF8, WC_ERR_INVALID_CHARS, text.data(), inputLength, bytes.data(), required, nullptr, nullptr) != required)
-            {
-                ThrowLastWin32Error("Encoding the profile list");
-            }
-            return bytes;
-        }
-
-        enum class ReadOutcome
-        {
-            Read,
-            Missing,
-            TooLarge,
-        };
-
-        ReadOutcome ReadFileBytes(std::filesystem::path const& path, std::string& bytes)
-        {
-            wil::unique_hfile file{ CreateFileW(
-                path.c_str(), GENERIC_READ, FILE_SHARE_READ, nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr) };
-            if (!file)
-            {
-                auto const error = GetLastError();
-                if (error == ERROR_FILE_NOT_FOUND || error == ERROR_PATH_NOT_FOUND)
-                {
-                    return ReadOutcome::Missing;
-                }
-                ThrowWin32Error(error, "Opening the profile list");
-            }
-
-            LARGE_INTEGER size{};
-            if (!GetFileSizeEx(file.get(), &size))
-            {
-                ThrowLastWin32Error("Reading the profile list size");
-            }
-            if (size.QuadPart > MaxFileBytes)
-            {
-                return ReadOutcome::TooLarge;
-            }
-
-            bytes.assign(static_cast<std::size_t>(size.QuadPart), '\0');
-            DWORD totalRead = 0;
-            while (totalRead < bytes.size())
-            {
-                DWORD read = 0;
-                if (!ReadFile(file.get(), bytes.data() + totalRead, static_cast<DWORD>(bytes.size()) - totalRead, &read, nullptr))
-                {
-                    ThrowLastWin32Error("Reading the profile list");
-                }
-                if (read == 0)
-                {
-                    break;
-                }
-                totalRead += read;
-            }
-            bytes.resize(totalRead);
-            return ReadOutcome::Read;
         }
 
         std::filesystem::path QuarantinePathFor(std::filesystem::path const& file)
@@ -353,30 +252,26 @@ namespace ClaudeSwitcher::Core
     LoadResult ProfileStore::Load() const
     {
         LoadResult result;
-        std::string bytes;
-        auto const outcome = ReadFileBytes(m_filePath, bytes);
-        if (outcome == ReadOutcome::Missing)
+        auto const file = ReadUtf8File(m_filePath, MaxFileBytes);
+        if (file.Status == Utf8ReadStatus::Missing)
         {
             result.Status = LoadStatus::Missing;
             return result;
         }
 
-        if (outcome == ReadOutcome::Read)
+        if (file.Status == Utf8ReadStatus::Read)
         {
-            if (auto const text = DecodeUtf8(bytes))
+            auto parsed = ParseProfileDocument(file.Text);
+            if (parsed.Status == ParseStatus::Parsed)
             {
-                auto parsed = ParseProfileDocument(*text);
-                if (parsed.Status == ParseStatus::Parsed)
-                {
-                    result.Status = LoadStatus::Loaded;
-                    result.Document = std::move(parsed.Document);
-                    return result;
-                }
-                if (parsed.Status == ParseStatus::NewerSchema)
-                {
-                    result.Status = LoadStatus::NewerSchema;
-                    return result;
-                }
+                result.Status = LoadStatus::Loaded;
+                result.Document = std::move(parsed.Document);
+                return result;
+            }
+            if (parsed.Status == ParseStatus::NewerSchema)
+            {
+                result.Status = LoadStatus::NewerSchema;
+                return result;
             }
         }
 
@@ -406,54 +301,6 @@ namespace ClaudeSwitcher::Core
 
     void ProfileStore::Save(ProfileDocument const& document) const
     {
-        auto const bytes = EncodeUtf8(SerializeProfileDocument(document));
-        if (bytes.size() > MaxFileBytes)
-        {
-            ThrowWin32Error(ERROR_FILE_TOO_LARGE, "Saving the profile list");
-        }
-
-        std::error_code directoryError;
-        std::filesystem::create_directories(m_filePath.parent_path(), directoryError);
-        if (directoryError)
-        {
-            throw std::system_error(directoryError, "Creating the settings folder");
-        }
-
-        auto temporary = m_filePath;
-        temporary += L".tmp";
-
-        // Declared before the handle so that on failure the handle closes
-        // first and the half-written file can actually be deleted.
-        auto removeTemporary = wil::scope_exit([&temporary] { DeleteFileW(temporary.c_str()); });
-        wil::unique_hfile file{ CreateFileW(
-            temporary.c_str(), GENERIC_WRITE, 0, nullptr, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, nullptr) };
-        if (!file)
-        {
-            ThrowLastWin32Error("Creating the profile list");
-        }
-
-        if (!bytes.empty())
-        {
-            DWORD written = 0;
-            if (!WriteFile(file.get(), bytes.data(), static_cast<DWORD>(bytes.size()), &written, nullptr))
-            {
-                ThrowLastWin32Error("Writing the profile list");
-            }
-            if (written != bytes.size())
-            {
-                ThrowWin32Error(ERROR_WRITE_FAULT, "Writing the profile list");
-            }
-        }
-        if (!FlushFileBuffers(file.get()))
-        {
-            ThrowLastWin32Error("Flushing the profile list");
-        }
-        file.reset();
-
-        if (!MoveFileExW(temporary.c_str(), m_filePath.c_str(), MOVEFILE_REPLACE_EXISTING | MOVEFILE_WRITE_THROUGH))
-        {
-            ThrowLastWin32Error("Replacing the profile list");
-        }
-        removeTemporary.release();
+        WriteUtf8FileAtomically(m_filePath, SerializeProfileDocument(document), MaxFileBytes);
     }
 }

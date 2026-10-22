@@ -8,7 +8,7 @@
 
 namespace ClaudeSwitcher::Shell
 {
-    std::filesystem::path ExecutableDirectory()
+    std::filesystem::path ExecutablePath()
     {
         std::wstring path(MAX_PATH, L'\0');
         for (;;)
@@ -21,10 +21,15 @@ namespace ClaudeSwitcher::Shell
             if (length < path.size())
             {
                 path.resize(length);
-                return std::filesystem::path{ path }.parent_path();
+                return std::filesystem::path{ path };
             }
             path.resize(path.size() * 2);
         }
+    }
+
+    std::filesystem::path ExecutableDirectory()
+    {
+        return ExecutablePath().parent_path();
     }
 
     std::filesystem::path BundledAppIcon()

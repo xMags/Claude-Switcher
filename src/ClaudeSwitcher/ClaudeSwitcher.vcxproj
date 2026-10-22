@@ -89,6 +89,7 @@
     <Page Include="Shell\MainWindow.xaml" />
     <Page Include="Views\ProfilesPage.xaml" />
     <Page Include="Views\ProfileEditDialog.xaml" />
+    <Page Include="Views\SettingsPage.xaml" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h" />
@@ -100,11 +101,16 @@
     </ClInclude>
     <ClInclude Include="Shell\AppPaths.h" />
     <ClInclude Include="Shell\SingleInstanceGuard.h" />
+    <ClInclude Include="Shell\TrayIcon.h" />
     <ClInclude Include="ViewModels\ProfileCardViewModel.h" />
     <ClInclude Include="ViewModels\ProfilesViewModel.h" />
+    <ClInclude Include="ViewModels\SettingsViewModel.h" />
     <ClInclude Include="ViewModels\StatusPoller.h" />
     <ClInclude Include="Views\ProfilesPage.xaml.h">
       <DependentUpon>Views\ProfilesPage.xaml</DependentUpon>
+    </ClInclude>
+    <ClInclude Include="Views\SettingsPage.xaml.h">
+      <DependentUpon>Views\SettingsPage.xaml</DependentUpon>
     </ClInclude>
     <ClInclude Include="Views\ProfileEditDialog.xaml.h">
       <DependentUpon>Views\ProfileEditDialog.xaml</DependentUpon>
@@ -122,11 +128,16 @@
     </ClCompile>
     <ClCompile Include="Shell\AppPaths.cpp" />
     <ClCompile Include="Shell\SingleInstanceGuard.cpp" />
+    <ClCompile Include="Shell\TrayIcon.cpp" />
     <ClCompile Include="ViewModels\ProfileCardViewModel.cpp" />
     <ClCompile Include="ViewModels\ProfilesViewModel.cpp" />
+    <ClCompile Include="ViewModels\SettingsViewModel.cpp" />
     <ClCompile Include="ViewModels\StatusPoller.cpp" />
     <ClCompile Include="Views\ProfilesPage.xaml.cpp">
       <DependentUpon>Views\ProfilesPage.xaml</DependentUpon>
+    </ClCompile>
+    <ClCompile Include="Views\SettingsPage.xaml.cpp">
+      <DependentUpon>Views\SettingsPage.xaml</DependentUpon>
     </ClCompile>
     <ClCompile Include="Views\ProfileEditDialog.xaml.cpp">
       <DependentUpon>Views\ProfileEditDialog.xaml</DependentUpon>
@@ -144,6 +155,10 @@
     <Midl Include="Views\ProfilesPage.idl">
       <SubType>Code</SubType>
       <DependentUpon>Views\ProfilesPage.xaml</DependentUpon>
+    </Midl>
+    <Midl Include="Views\SettingsPage.idl">
+      <SubType>Code</SubType>
+      <DependentUpon>Views\SettingsPage.xaml</DependentUpon>
     </Midl>
     <Midl Include="Views\ProfileEditDialog.idl">
       <SubType>Code</SubType>

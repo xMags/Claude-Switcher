@@ -25,6 +25,22 @@ folder, so each one keeps its own sign-in, settings and MCP configuration.
   deleting it removes them. Only shortcuts pointing at that profile's folder
   are touched.
 
+## Settings
+
+The gear at the bottom of the side panel opens Settings:
+
+- **App theme:** follow Windows, light or dark.
+- **Start with Windows:** a per-user entry under
+  `HKCU\Software\Microsoft\Windows\CurrentVersion\Run`, started with
+  `--startup`. It honours the switch in Windows Settings > Apps > Startup, and
+  follows the exe if it moves.
+- **Minimize to tray:** minimizing hides the window in the notification area.
+  Click the icon to bring it back, right-click it to quit. A sign-in start goes
+  straight to the tray when this is on, otherwise it starts minimized.
+
+Preferences are stored in `%LOCALAPPDATA%\ClaudeSwitcher\settings.json`,
+separate from the profile list.
+
 ## Signing in to a new profile
 
 Sign in with the **emailed code**. Browser sign-in links and Google sign-in

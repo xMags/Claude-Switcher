@@ -45,6 +45,7 @@
 
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="AppSettings.h" />
     <ClInclude Include="ClaudeInstallLocator.h" />
     <ClInclude Include="ClaudeLauncher.h" />
     <ClInclude Include="CommandLineParsing.h" />
@@ -56,9 +57,12 @@
     <ClInclude Include="ProfileStore.h" />
     <ClInclude Include="ProfileValidation.h" />
     <ClInclude Include="ShortcutWriter.h" />
+    <ClInclude Include="StartupRegistration.h" />
     <ClInclude Include="SystemError.h" />
+    <ClInclude Include="Utf8File.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="AppSettings.cpp" />
     <ClCompile Include="ClaudeInstallLocator.cpp" />
     <ClCompile Include="ClaudeLauncher.cpp" />
     <ClCompile Include="CommandLineParsing.cpp" />
@@ -70,7 +74,9 @@
     <ClCompile Include="ProfileStore.cpp" />
     <ClCompile Include="ProfileValidation.cpp" />
     <ClCompile Include="ShortcutWriter.cpp" />
+    <ClCompile Include="StartupRegistration.cpp" />
     <ClCompile Include="SystemError.cpp" />
+    <ClCompile Include="Utf8File.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

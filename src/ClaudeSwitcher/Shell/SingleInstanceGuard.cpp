@@ -1,6 +1,8 @@
 #include "pch.h"
 #include "Shell/SingleInstanceGuard.h"
 
+#include "Shell/TrayIcon.h"
+
 namespace ClaudeSwitcher::Shell
 {
     namespace
@@ -24,6 +26,18 @@ namespace ClaudeSwitcher::Shell
 
     void ActivateExistingInstance() noexcept
     {
+        // This process was just started by the user, so it holds the right to
+        // take the foreground; hand it on so the running copy can use it.
+        AllowSetForegroundWindow(ASFW_ANY);
+
+        // Preferred: ask the running copy to restore itself, which also works
+        // when its window is hidden in the tray.
+        if (auto const tray = FindWindowW(TrayIcon::WindowClass, nullptr))
+        {
+            PostMessageW(tray, TrayIcon::RestoreMessage(), 0, 0);
+            return;
+        }
+
         auto const window = FindWindowW(WinUIWindowClass, MainWindowTitle);
         if (window == nullptr)
         {

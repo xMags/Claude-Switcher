@@ -28,6 +28,27 @@
                 Text="Claude Switcher" />
         </Grid>
 
-        <Border x:Name="PageHost" Grid.Row="1" />
+        <!-- A slim icon rail: Home at the top, the built-in Settings item at the bottom. -->
+        <NavigationView
+            x:Name="Navigation"
+            Grid.Row="1"
+            IsBackButtonVisible="Collapsed"
+            IsPaneToggleButtonVisible="False"
+            IsSettingsVisible="True"
+            IsTitleBarAutoPaddingEnabled="False"
+            PaneDisplayMode="LeftCompact"
+            SelectionChanged="OnNavigationSelectionChanged">
+            <NavigationView.MenuItems>
+                <NavigationViewItem
+                    x:Name="HomeItem"
+                    Content="Home"
+                    ToolTipService.ToolTip="Home">
+                    <NavigationViewItem.Icon>
+                        <FontIcon Glyph="&#xE80F;" />
+                    </NavigationViewItem.Icon>
+                </NavigationViewItem>
+            </NavigationView.MenuItems>
+            <Border x:Name="PageHost" />
+        </NavigationView>
     </Grid>
 </Window>

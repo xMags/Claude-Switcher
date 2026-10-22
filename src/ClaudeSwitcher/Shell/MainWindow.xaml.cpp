@@ -4,8 +4,10 @@
 #include "MainWindow.g.cpp"
 #endif
 
+#include "Core/AppSettings.h"
 #include "Shell/AppPaths.h"
 #include "ViewModels/ProfilesViewModel.h"
+#include "ViewModels/SettingsViewModel.h"
 
 #include <microsoft.ui.xaml.window.h>
 #include <winrt/ClaudeSwitcher.h>
@@ -13,19 +15,23 @@
 #include <winrt/Microsoft.UI.Xaml.Media.h>
 
 #include <filesystem>
-#include <string>
+#include <string_view>
 
 namespace winrt::ClaudeSwitcher::implementation
 {
     namespace
     {
+        using Microsoft::UI::Windowing::OverlappedPresenter;
+        using Microsoft::UI::Windowing::OverlappedPresenterState;
+
         // In effective pixels; scaled by the monitor's DPI.
-        constexpr double InitialWidth = 940;
-        constexpr double InitialHeight = 660;
+        constexpr double InitialWidth = 960;
+        constexpr double InitialHeight = 680;
     }
 
-    MainWindow::MainWindow(winrt::ClaudeSwitcher::ProfilesViewModel viewModel)
-        : m_viewModel(std::move(viewModel))
+    MainWindow::MainWindow(winrt::ClaudeSwitcher::ProfilesViewModel profiles, winrt::ClaudeSwitcher::SettingsViewModel settings)
+        : m_profiles(std::move(profiles)),
+          m_settings(std::move(settings))
     {
     }
 
@@ -37,17 +43,68 @@ namespace winrt::ClaudeSwitcher::implementation
         ExtendsContentIntoTitleBar(true);
         SetTitleBar(AppTitleBar());
 
-        PageHost().Child(winrt::ClaudeSwitcher::ProfilesPage{ m_viewModel });
+        // Both pages are kept for the window's lifetime, so switching keeps
+        // their state (scroll position, open messages).
+        m_homePage = winrt::ClaudeSwitcher::ProfilesPage{ m_profiles };
+        m_settingsPage = winrt::ClaudeSwitcher::SettingsPage{ m_settings };
+        Navigation().SelectedItem(HomeItem());
+        PageHost().Child(m_homePage);
 
         auto const window = WindowHandle();
-        winrt::get_self<ProfilesViewModel>(m_viewModel)->AttachOwnerWindow(window);
+        winrt::get_self<ProfilesViewModel>(m_profiles)->AttachOwnerWindow(window);
         ApplyInitialSize(window);
+        // Before the first paint, so a dark preference never flashes light.
+        ApplyTheme();
 
         auto const icon = ::ClaudeSwitcher::Shell::BundledAppIcon();
         if (std::filesystem::exists(icon))
         {
             AppWindow().SetIcon(icon.wstring());
         }
+
+        // Tray callbacks run inside the tray window's message handler, so
+        // anything that may tear the window down is posted, not run inline.
+        auto const queue = DispatcherQueue();
+        m_tray = std::make_unique<::ClaudeSwitcher::Shell::TrayIcon>(::ClaudeSwitcher::Shell::TrayIcon::Callbacks{
+            [weak = get_weak(), queue]
+            {
+                queue.TryEnqueue([weak] {
+                    if (auto const self = weak.get())
+                    {
+                        self->RestoreWindow();
+                    }
+                });
+            },
+            [weak = get_weak(), queue]
+            {
+                queue.TryEnqueue([weak] {
+                    if (auto const self = weak.get())
+                    {
+                        self->Quit();
+                    }
+                });
+            },
+        });
+        m_tray->SetVisible(winrt::get_self<SettingsViewModel>(m_settings)->Current().MinimizeToTray);
+
+        m_settingsChangedToken = m_settings.PropertyChanged(
+            [weak = get_weak()]([[maybe_unused]] auto const& sender, Microsoft::UI::Xaml::Data::PropertyChangedEventArgs const& args)
+            {
+                auto const self = weak.get();
+                if (!self)
+                {
+                    return;
+                }
+                std::wstring_view const name = args.PropertyName();
+                if (name == L"ThemeIndex")
+                {
+                    self->ApplyTheme();
+                }
+                else if (name == L"MinimizeToTray")
+                {
+                    self->ApplyTrayPreference();
+                }
+            });
 
         m_activatedToken = Activated(
             [weak = get_weak()]([[maybe_unused]] auto const& sender, Microsoft::UI::Xaml::WindowActivatedEventArgs const& args)
@@ -60,7 +117,7 @@ namespace winrt::ClaudeSwitcher::implementation
                 // noticed, for example right after quitting Claude.
                 if (auto const self = weak.get())
                 {
-                    self->m_viewModel.RefreshRunningState();
+                    self->m_profiles.RefreshRunningState();
                 }
             });
 
@@ -69,7 +126,7 @@ namespace winrt::ClaudeSwitcher::implementation
             {
                 if (auto const self = weak.get())
                 {
-                    self->UpdatePollingForWindowState();
+                    self->OnWindowStateChanged();
                 }
             });
 
@@ -78,12 +135,49 @@ namespace winrt::ClaudeSwitcher::implementation
             {
                 if (auto const self = weak.get())
                 {
-                    self->m_viewModel.SetStatusUpdatesPaused(true);
+                    self->m_profiles.SetStatusUpdatesPaused(true);
                     self->AppWindow().Changed(self->m_appWindowChangedToken);
+                    self->m_settings.PropertyChanged(self->m_settingsChangedToken);
+                    self->m_tray.reset();
                 }
             });
+    }
 
-        m_viewModel.SetStatusUpdatesPaused(false);
+    void MainWindow::Start(bool launchedAtSignIn)
+    {
+        if (!launchedAtSignIn)
+        {
+            Activate();
+            UpdatePolling();
+            return;
+        }
+
+        auto const& settings = winrt::get_self<SettingsViewModel>(m_settings)->Current();
+        if (!settings.MinimizeToTray)
+        {
+            // Appears on the taskbar without taking focus from whatever the
+            // user opened first after signing in.
+            if (auto const presenter = AppWindow().Presenter().try_as<OverlappedPresenter>())
+            {
+                presenter.Minimize();
+            }
+        }
+        // With the tray on, the window is simply never shown until asked for.
+        UpdatePolling();
+    }
+
+    void MainWindow::OnNavigationSelectionChanged(
+        [[maybe_unused]] Microsoft::UI::Xaml::Controls::NavigationView const& sender,
+        Microsoft::UI::Xaml::Controls::NavigationViewSelectionChangedEventArgs const& args)
+    {
+        if (args.IsSettingsSelected())
+        {
+            PageHost().Child(m_settingsPage);
+        }
+        else
+        {
+            PageHost().Child(m_homePage);
+        }
     }
 
     HWND MainWindow::WindowHandle() const
@@ -104,11 +198,84 @@ namespace winrt::ClaudeSwitcher::implementation
         AppWindow().Resize({ static_cast<std::int32_t>(InitialWidth * scale), static_cast<std::int32_t>(InitialHeight * scale) });
     }
 
-    void MainWindow::UpdatePollingForWindowState()
+    void MainWindow::ApplyTheme()
     {
-        // Nobody can see the cards while the window is minimized.
-        auto const presenter = AppWindow().Presenter().try_as<Microsoft::UI::Windowing::OverlappedPresenter>();
-        auto const minimized = presenter && presenter.State() == Microsoft::UI::Windowing::OverlappedPresenterState::Minimized;
-        m_viewModel.SetStatusUpdatesPaused(minimized);
+        using Microsoft::UI::Windowing::TitleBarTheme;
+        using Microsoft::UI::Xaml::ElementTheme;
+
+        auto elementTheme = ElementTheme::Default;
+        auto titleBarTheme = TitleBarTheme::UseDefaultAppMode;
+        switch (winrt::get_self<SettingsViewModel>(m_settings)->Current().Theme)
+        {
+        case ::ClaudeSwitcher::Core::ThemePreference::Light:
+            elementTheme = ElementTheme::Light;
+            titleBarTheme = TitleBarTheme::Light;
+            break;
+        case ::ClaudeSwitcher::Core::ThemePreference::Dark:
+            elementTheme = ElementTheme::Dark;
+            titleBarTheme = TitleBarTheme::Dark;
+            break;
+        case ::ClaudeSwitcher::Core::ThemePreference::System:
+            break;
+        }
+        RootGrid().RequestedTheme(elementTheme);
+        // The minimize, maximize and close buttons are drawn by Windows, not XAML.
+        AppWindow().TitleBar().PreferredTheme(titleBarTheme);
+    }
+
+    void MainWindow::ApplyTrayPreference()
+    {
+        auto const enabled = winrt::get_self<SettingsViewModel>(m_settings)->Current().MinimizeToTray;
+        if (m_tray)
+        {
+            m_tray->SetVisible(enabled);
+        }
+        // Only reached from a settings change. Turning the tray off while
+        // hidden would leave no way back, so the window comes back first.
+        if (!enabled && !AppWindow().IsVisible())
+        {
+            RestoreWindow();
+        }
+    }
+
+    void MainWindow::OnWindowStateChanged()
+    {
+        auto const presenter = AppWindow().Presenter().try_as<OverlappedPresenter>();
+        auto const minimized = presenter && presenter.State() == OverlappedPresenterState::Minimized;
+        if (minimized && AppWindow().IsVisible() && winrt::get_self<SettingsViewModel>(m_settings)->Current().MinimizeToTray)
+        {
+            // Hiding removes the taskbar button; the tray icon brings it back.
+            AppWindow().Hide();
+        }
+        UpdatePolling();
+    }
+
+    void MainWindow::UpdatePolling()
+    {
+        // Nobody can see the cards while the window is minimized or hidden.
+        auto const presenter = AppWindow().Presenter().try_as<OverlappedPresenter>();
+        auto const minimized = presenter && presenter.State() == OverlappedPresenterState::Minimized;
+        m_profiles.SetStatusUpdatesPaused(minimized || !AppWindow().IsVisible());
+    }
+
+    void MainWindow::RestoreWindow()
+    {
+        AppWindow().Show();
+        if (auto const presenter = AppWindow().Presenter().try_as<OverlappedPresenter>();
+            presenter && presenter.State() == OverlappedPresenterState::Minimized)
+        {
+            presenter.Restore();
+        }
+        Activate();
+        if (auto const window = WindowHandle())
+        {
+            SetForegroundWindow(window);
+        }
+        UpdatePolling();
+    }
+
+    void MainWindow::Quit()
+    {
+        Close();
     }
 }

@@ -4,6 +4,9 @@
 
 namespace ClaudeSwitcher::Shell
 {
+    // Full path of ClaudeSwitcher.exe; empty if Windows cannot report it.
+    [[nodiscard]] std::filesystem::path ExecutablePath();
+
     // Folder holding ClaudeSwitcher.exe; empty if Windows cannot report it.
     [[nodiscard]] std::filesystem::path ExecutableDirectory();
 

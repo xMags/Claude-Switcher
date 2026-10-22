@@ -50,4 +50,16 @@ namespace ClaudeSwitcher
         void RefreshRunningState();
         void SetStatusUpdatesPaused(Boolean paused);
     }
+
+    runtimeclass SettingsViewModel : Microsoft.UI.Xaml.Data.INotifyPropertyChanged
+    {
+        // 0 = follow Windows, 1 = light, 2 = dark.
+        Int32 ThemeIndex;
+        Boolean MinimizeToTray;
+        Boolean StartWithWindows;
+
+        Boolean IsErrorOpen { get; };
+        String ErrorText { get; };
+        void DismissError();
+    }
 }

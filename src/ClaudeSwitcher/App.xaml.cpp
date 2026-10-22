@@ -1,11 +1,17 @@
 #include "pch.h"
 #include "App.xaml.h"
 
+#include "Core/AppSettings.h"
+#include "Core/CommandLineParsing.h"
+#include "Core/OrdinalText.h"
 #include "Core/ProfileCatalog.h"
 #include "Core/ProfileFolders.h"
 #include "Core/ProfileStore.h"
+#include "Core/StartupRegistration.h"
+#include "Shell/AppPaths.h"
 #include "Shell/MainWindow.xaml.h"
 #include "ViewModels/ProfilesViewModel.h"
+#include "ViewModels/SettingsViewModel.h"
 
 #include <shobjidl_core.h>
 
@@ -46,11 +52,30 @@ namespace winrt::ClaudeSwitcher::implementation
             core::ProfileStore{ core::SwitcherSettingsFile() },
             core::DefaultProfilesRoot(),
             &core::CheckProfilesRoot);
-        auto viewModel = winrt::make<ProfilesViewModel>(
+        auto profiles = winrt::make<ProfilesViewModel>(
             std::move(catalog),
             Microsoft::UI::Dispatching::DispatcherQueue::GetForCurrentThread());
+        auto settings = winrt::make<SettingsViewModel>(
+            core::AppSettingsStore{ core::AppSettingsFile() },
+            core::StartupRegistration::ForCurrentUser(),
+            ::ClaudeSwitcher::Shell::ExecutablePath());
 
-        m_window = winrt::make<MainWindow>(viewModel);
-        m_window.Activate();
+        auto const window = winrt::make_self<MainWindow>(profiles, settings);
+        m_window = *window;
+        window->Start(LaunchedAtSignIn());
+    }
+
+    bool App::LaunchedAtSignIn()
+    {
+        // The startup entry adds this switch; nothing else does.
+        auto const arguments = ::ClaudeSwitcher::Core::SplitCommandLine(GetCommandLineW());
+        for (std::size_t i = 1; i < arguments.size(); ++i)
+        {
+            if (::ClaudeSwitcher::Core::EqualsOrdinalIgnoreCase(arguments[i], ::ClaudeSwitcher::Core::StartupSwitch))
+            {
+                return true;
+            }
+        }
+        return false;
     }
 }
