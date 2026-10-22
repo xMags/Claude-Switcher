@@ -1,6 +1,7 @@
 #pragma once
 
 #include <filesystem>
+#include <optional>
 #include <string>
 #include <string_view>
 
@@ -25,4 +26,8 @@ namespace ClaudeSwitcher::Core
     // Creates or replaces a .lnk file. Needs COM initialized on the calling
     // thread. Throws std::system_error.
     void WriteShortcut(ShortcutSpec const& spec);
+
+    // The arguments stored in a .lnk file, or nothing when the file is
+    // missing or not a readable shortcut. Needs COM on the calling thread.
+    [[nodiscard]] std::optional<std::wstring> ReadShortcutArguments(std::filesystem::path const& location);
 }

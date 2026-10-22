@@ -1,0 +1,11 @@
+import "ViewModels/ViewModels.idl";
+
+namespace ClaudeSwitcher
+{
+    [default_interface]
+    runtimeclass ProfilesPage : Microsoft.UI.Xaml.Controls.Page
+    {
+        ProfilesPage(ProfilesViewModel viewModel);
+        ProfilesViewModel ViewModel { get; };
+    }
+}

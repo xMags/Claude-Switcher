@@ -1,0 +1,52 @@
+namespace ClaudeSwitcher
+{
+    // One card on the profiles page: a saved profile, or the built-in card
+    // for Claude's own default data.
+    runtimeclass ProfileCardViewModel : Microsoft.UI.Xaml.Data.INotifyPropertyChanged
+    {
+        String Id { get; };
+        String Name { get; };
+        String Note { get; };
+        String AccentColorHex { get; };
+        Windows.UI.Color AccentColor { get; };
+        Boolean IsDefault { get; };
+        Boolean IsRunning { get; };
+        Boolean CanLaunch { get; };
+        String PrimaryActionText { get; };
+        Microsoft.UI.Xaml.Visibility RunningVisibility { get; };
+        // Edit, shortcut and delete apply to saved profiles only.
+        Microsoft.UI.Xaml.Visibility ManageVisibility { get; };
+    }
+
+    runtimeclass ProfilesViewModel : Microsoft.UI.Xaml.Data.INotifyPropertyChanged
+    {
+        Windows.Foundation.Collections.IObservableVector<ProfileCardViewModel> Cards { get; };
+        String StatusText { get; };
+        Boolean CanAddProfiles { get; };
+        Microsoft.UI.Xaml.Visibility EmptyHintVisibility { get; };
+
+        Boolean IsMessageOpen { get; };
+        String MessageTitle { get; };
+        String MessageText { get; };
+        Microsoft.UI.Xaml.Controls.InfoBarSeverity MessageSeverity { get; };
+        void DismissMessage();
+
+        Boolean IsSignInHintOpen { get; };
+        void DismissSignInHint();
+
+        void Launch(String id);
+        // Each returns an empty string on success, otherwise the reason to
+        // show in the dialog that is still open.
+        String AddProfile(String name, String note, String accentColor);
+        String UpdateProfile(String id, String name, String note, String accentColor);
+        // False, with the reason shown as a message, when the profile cannot
+        // be deleted right now (for example because it is running).
+        Boolean CanDeleteProfile(String id);
+        void DeleteProfile(String id);
+        void CreateDesktopShortcut(String id);
+        void OpenDataFolder(String id);
+
+        void RefreshRunningState();
+        void SetStatusUpdatesPaused(Boolean paused);
+    }
+}

@@ -55,4 +55,28 @@ namespace ClaudeSwitcher::Core
         }
         ThrowIfFailed(file->Save(spec.Location.c_str(), TRUE), "Saving the shortcut");
     }
+
+    std::optional<std::wstring> ReadShortcutArguments(std::filesystem::path const& location)
+    {
+        wil::com_ptr_nothrow<IShellLinkW> link;
+        if (FAILED(CoCreateInstance(CLSID_ShellLink, nullptr, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&link))))
+        {
+            return std::nullopt;
+        }
+        auto const file = link.try_query<IPersistFile>();
+        if (!file || FAILED(file->Load(location.c_str(), STGM_READ)))
+        {
+            return std::nullopt;
+        }
+
+        // INFOTIPSIZE (1024) is the documented upper bound for shortcut arguments.
+        constexpr std::size_t MaxArguments = 1024;
+        std::wstring arguments(MaxArguments, L'\0');
+        if (FAILED(link->GetArguments(arguments.data(), static_cast<int>(arguments.size()))))
+        {
+            return std::nullopt;
+        }
+        arguments.resize(wcsnlen(arguments.c_str(), arguments.size()));
+        return arguments;
+    }
 }

@@ -1,0 +1,5 @@
+// Gives ClaudeSwitcher.exe its icon in Explorer, the taskbar and Alt+Tab.
+// Windows uses the lowest-numbered icon group, so this stays at 1.
+#include <windows.h>
+
+1 ICON "Assets\\AppIcon.ico"

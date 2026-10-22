@@ -1,0 +1,13 @@
+namespace ClaudeSwitcher
+{
+    [default_interface]
+    runtimeclass ProfileEditDialog : Microsoft.UI.Xaml.Controls.ContentDialog
+    {
+        // Empty values start a new profile.
+        ProfileEditDialog(String title, String name, String note, String accentColor);
+        String ProfileName { get; };
+        String ProfileNote { get; };
+        String AccentColor { get; };
+        void ShowError(String message);
+    }
+}

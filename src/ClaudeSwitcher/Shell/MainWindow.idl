@@ -1,0 +1,10 @@
+import "ViewModels/ViewModels.idl";
+
+namespace ClaudeSwitcher
+{
+    [default_interface]
+    runtimeclass MainWindow : Microsoft.UI.Xaml.Window
+    {
+        MainWindow(ProfilesViewModel viewModel);
+    }
+}

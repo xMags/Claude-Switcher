@@ -1,0 +1,187 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="15.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="..\..\packages\Microsoft.Windows.SDK.BuildTools.10.0.28000.2526\build\Microsoft.Windows.SDK.BuildTools.props" Condition="Exists('..\..\packages\Microsoft.Windows.SDK.BuildTools.10.0.28000.2526\build\Microsoft.Windows.SDK.BuildTools.props')" />
+  <Import Project="..\..\packages\Microsoft.Windows.CppWinRT.3.0.260818.1\build\native\Microsoft.Windows.CppWinRT.props" Condition="Exists('..\..\packages\Microsoft.Windows.CppWinRT.3.0.260818.1\build\native\Microsoft.Windows.CppWinRT.props')" />
+  <Import Project="..\..\packages\Microsoft.WindowsAppSDK.WinUI.2.3.6\build\native\Microsoft.WindowsAppSDK.WinUI.props" Condition="Exists('..\..\packages\Microsoft.WindowsAppSDK.WinUI.2.3.6\build\native\Microsoft.WindowsAppSDK.WinUI.props')" />
+  <Import Project="..\..\packages\Microsoft.WindowsAppSDK.Runtime.2.4.0\build\native\Microsoft.WindowsAppSDK.Runtime.props" Condition="Exists('..\..\packages\Microsoft.WindowsAppSDK.Runtime.2.4.0\build\native\Microsoft.WindowsAppSDK.Runtime.props')" />
+  <Import Project="..\..\packages\Microsoft.WindowsAppSDK.Foundation.2.3.9\build\native\Microsoft.WindowsAppSDK.Foundation.props" Condition="Exists('..\..\packages\Microsoft.WindowsAppSDK.Foundation.2.3.9\build\native\Microsoft.WindowsAppSDK.Foundation.props')" />
+  <Import Project="..\..\packages\Microsoft.WindowsAppSDK.InteractiveExperiences.2.1.6\build\native\Microsoft.WindowsAppSDK.InteractiveExperiences.props" Condition="Exists('..\..\packages\Microsoft.WindowsAppSDK.InteractiveExperiences.2.1.6\build\native\Microsoft.WindowsAppSDK.InteractiveExperiences.props')" />
+  <Import Project="..\..\packages\Microsoft.WindowsAppSDK.DWrite.2.1.0\build\Microsoft.WindowsAppSDK.DWrite.props" Condition="Exists('..\..\packages\Microsoft.WindowsAppSDK.DWrite.2.1.0\build\Microsoft.WindowsAppSDK.DWrite.props')" />
+  <Import Project="..\..\packages\Microsoft.WindowsAppSDK.Base.2.0.4\build\native\Microsoft.WindowsAppSDK.Base.props" Condition="Exists('..\..\packages\Microsoft.WindowsAppSDK.Base.2.0.4\build\native\Microsoft.WindowsAppSDK.Base.props')" />
+  <Import Project="..\..\packages\Microsoft.Windows.SDK.BuildTools.MSIX.1.7.251221100\build\Microsoft.Windows.SDK.BuildTools.MSIX.props" Condition="Exists('..\..\packages\Microsoft.Windows.SDK.BuildTools.MSIX.1.7.251221100\build\Microsoft.Windows.SDK.BuildTools.MSIX.props')" />
+  <PropertyGroup Label="Globals">
+    <CppWinRTOptimized>true</CppWinRTOptimized>
+    <CppWinRTRootNamespaceAutoMerge>true</CppWinRTRootNamespaceAutoMerge>
+    <MinimalCoreWin>true</MinimalCoreWin>
+    <ProjectGuid>{08540250-58da-4335-9a7d-1bec597d276a}</ProjectGuid>
+    <ProjectName>ClaudeSwitcher</ProjectName>
+    <RootNamespace>ClaudeSwitcher</RootNamespace>
+    <!-- Must match RootNamespace so the .exe, .pri and .winmd share a name. -->
+    <TargetName>$(RootNamespace)</TargetName>
+    <DefaultLanguage>en-US</DefaultLanguage>
+    <MinimumVisualStudioVersion>16.0</MinimumVisualStudioVersion>
+    <AppContainerApplication>false</AppContainerApplication>
+    <AppxPackage>false</AppxPackage>
+    <WindowsPackageType>None</WindowsPackageType>
+    <WindowsAppSDKSelfContained>true</WindowsAppSDKSelfContained>
+    <ApplicationType>Windows Store</ApplicationType>
+    <ApplicationTypeRevision>10.0</ApplicationTypeRevision>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformMinVersion>10.0.17763.0</WindowsTargetPlatformMinVersion>
+    <UseWinUI>true</UseWinUI>
+    <WinUISDKReferences>false</WinUISDKReferences>
+    <!--
+      Unpackaged XAML still loads resources.pri through MRT Core. Keeping MSIX
+      tooling off keeps PRI generation on, and the two overrides make the
+      generator emit the unprefixed resources.pri that XAML looks for.
+    -->
+    <EnableMsixTooling>false</EnableMsixTooling>
+    <PrependPriInitialPath>false</PrependPriInitialPath>
+    <ProjectPriFileName>resources.pri</ProjectPriFileName>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <PlatformToolset>v145</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+    <DesktopCompatible>true</DesktopCompatible>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)'=='Debug'" Label="Configuration">
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <LinkIncremental>true</LinkIncremental>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)'=='Release'" Label="Configuration">
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <LinkIncremental>false</LinkIncremental>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <Import Project="..\..\build\HybridCRT.props" />
+  <Import Project="..\..\build\Common.props" />
+  <ImportGroup Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
+      <PrecompiledHeaderOutputFile>$(IntDir)pch.pch</PrecompiledHeaderOutputFile>
+      <AdditionalIncludeDirectories>$(ProjectDir);$(GeneratedFilesDir)Shell;$(GeneratedFilesDir)Views;$(GeneratedFilesDir)ViewModels;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
+    <Midl>
+      <AdditionalIncludeDirectories>$(ProjectDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </Midl>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <Manifest Include="app.manifest" />
+  </ItemGroup>
+  <ItemGroup>
+    <ApplicationDefinition Include="App.xaml" />
+    <Page Include="Shell\MainWindow.xaml" />
+    <Page Include="Views\ProfilesPage.xaml" />
+    <Page Include="Views\ProfileEditDialog.xaml" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="pch.h" />
+    <ClInclude Include="App.xaml.h">
+      <DependentUpon>App.xaml</DependentUpon>
+    </ClInclude>
+    <ClInclude Include="Shell\MainWindow.xaml.h">
+      <DependentUpon>Shell\MainWindow.xaml</DependentUpon>
+    </ClInclude>
+    <ClInclude Include="Shell\SingleInstanceGuard.h" />
+    <ClInclude Include="ViewModels\ProfileCardViewModel.h" />
+    <ClInclude Include="ViewModels\ProfilesViewModel.h" />
+    <ClInclude Include="ViewModels\StatusPoller.h" />
+    <ClInclude Include="Views\ProfilesPage.xaml.h">
+      <DependentUpon>Views\ProfilesPage.xaml</DependentUpon>
+    </ClInclude>
+    <ClInclude Include="Views\ProfileEditDialog.xaml.h">
+      <DependentUpon>Views\ProfileEditDialog.xaml</DependentUpon>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="pch.cpp">
+      <PrecompiledHeader>Create</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="App.xaml.cpp">
+      <DependentUpon>App.xaml</DependentUpon>
+    </ClCompile>
+    <ClCompile Include="Shell\MainWindow.xaml.cpp">
+      <DependentUpon>Shell\MainWindow.xaml</DependentUpon>
+    </ClCompile>
+    <ClCompile Include="Shell\SingleInstanceGuard.cpp" />
+    <ClCompile Include="ViewModels\ProfileCardViewModel.cpp" />
+    <ClCompile Include="ViewModels\ProfilesViewModel.cpp" />
+    <ClCompile Include="ViewModels\StatusPoller.cpp" />
+    <ClCompile Include="Views\ProfilesPage.xaml.cpp">
+      <DependentUpon>Views\ProfilesPage.xaml</DependentUpon>
+    </ClCompile>
+    <ClCompile Include="Views\ProfileEditDialog.xaml.cpp">
+      <DependentUpon>Views\ProfileEditDialog.xaml</DependentUpon>
+    </ClCompile>
+    <ClCompile Include="$(GeneratedFilesDir)module.g.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <Midl Include="ViewModels\ViewModels.idl">
+      <SubType>Code</SubType>
+    </Midl>
+    <Midl Include="Shell\MainWindow.idl">
+      <SubType>Code</SubType>
+      <DependentUpon>Shell\MainWindow.xaml</DependentUpon>
+    </Midl>
+    <Midl Include="Views\ProfilesPage.idl">
+      <SubType>Code</SubType>
+      <DependentUpon>Views\ProfilesPage.xaml</DependentUpon>
+    </Midl>
+    <Midl Include="Views\ProfileEditDialog.idl">
+      <SubType>Code</SubType>
+      <DependentUpon>Views\ProfileEditDialog.xaml</DependentUpon>
+    </Midl>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="ClaudeSwitcher.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="Assets\AppIcon.ico">
+      <DeploymentContent>true</DeploymentContent>
+    </Image>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Core\Core.vcxproj">
+      <Project>{382c2d5b-6b1c-4f17-a4f7-4982bdc1410e}</Project>
+    </ProjectReference>
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+    <!-- WinUI's metadata refers to WebView2 types, so the projection needs it even though this app shows no web content. -->
+    <Import Project="..\..\packages\Microsoft.Web.WebView2.1.0.3719.77\build\native\Microsoft.Web.WebView2.targets" Condition="Exists('..\..\packages\Microsoft.Web.WebView2.1.0.3719.77\build\native\Microsoft.Web.WebView2.targets')" />
+    <Import Project="..\..\packages\Microsoft.Windows.SDK.BuildTools.MSIX.1.7.251221100\build\Microsoft.Windows.SDK.BuildTools.MSIX.targets" Condition="Exists('..\..\packages\Microsoft.Windows.SDK.BuildTools.MSIX.1.7.251221100\build\Microsoft.Windows.SDK.BuildTools.MSIX.targets')" />
+    <Import Project="..\..\packages\Microsoft.WindowsAppSDK.Base.2.0.4\build\native\Microsoft.WindowsAppSDK.Base.targets" Condition="Exists('..\..\packages\Microsoft.WindowsAppSDK.Base.2.0.4\build\native\Microsoft.WindowsAppSDK.Base.targets')" />
+    <Import Project="..\..\packages\Microsoft.WindowsAppSDK.DWrite.2.1.0\build\Microsoft.WindowsAppSDK.DWrite.targets" Condition="Exists('..\..\packages\Microsoft.WindowsAppSDK.DWrite.2.1.0\build\Microsoft.WindowsAppSDK.DWrite.targets')" />
+    <Import Project="..\..\packages\Microsoft.WindowsAppSDK.InteractiveExperiences.2.1.6\build\native\Microsoft.WindowsAppSDK.InteractiveExperiences.targets" Condition="Exists('..\..\packages\Microsoft.WindowsAppSDK.InteractiveExperiences.2.1.6\build\native\Microsoft.WindowsAppSDK.InteractiveExperiences.targets')" />
+    <Import Project="..\..\packages\Microsoft.WindowsAppSDK.Foundation.2.3.9\build\native\Microsoft.WindowsAppSDK.Foundation.targets" Condition="Exists('..\..\packages\Microsoft.WindowsAppSDK.Foundation.2.3.9\build\native\Microsoft.WindowsAppSDK.Foundation.targets')" />
+    <Import Project="..\..\packages\Microsoft.WindowsAppSDK.Runtime.2.4.0\build\native\Microsoft.WindowsAppSDK.Runtime.targets" Condition="Exists('..\..\packages\Microsoft.WindowsAppSDK.Runtime.2.4.0\build\native\Microsoft.WindowsAppSDK.Runtime.targets')" />
+    <Import Project="..\..\packages\Microsoft.WindowsAppSDK.WinUI.2.3.6\build\native\Microsoft.WindowsAppSDK.WinUI.targets" Condition="Exists('..\..\packages\Microsoft.WindowsAppSDK.WinUI.2.3.6\build\native\Microsoft.WindowsAppSDK.WinUI.targets')" />
+    <Import Project="..\..\packages\Microsoft.Windows.CppWinRT.3.0.260818.1\build\native\Microsoft.Windows.CppWinRT.targets" Condition="Exists('..\..\packages\Microsoft.Windows.CppWinRT.3.0.260818.1\build\native\Microsoft.Windows.CppWinRT.targets')" />
+    <Import Project="..\..\packages\Microsoft.Windows.SDK.BuildTools.10.0.28000.2526\build\Microsoft.Windows.SDK.BuildTools.targets" Condition="Exists('..\..\packages\Microsoft.Windows.SDK.BuildTools.10.0.28000.2526\build\Microsoft.Windows.SDK.BuildTools.targets')" />
+    <Import Project="..\..\packages\Microsoft.Windows.ImplementationLibrary.1.0.260126.7\build\native\Microsoft.Windows.ImplementationLibrary.targets" Condition="Exists('..\..\packages\Microsoft.Windows.ImplementationLibrary.1.0.260126.7\build\native\Microsoft.Windows.ImplementationLibrary.targets')" />
+  </ImportGroup>
+  <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
+    <Error Condition="!Exists('..\..\packages\Microsoft.WindowsAppSDK.WinUI.2.3.6\build\native\Microsoft.WindowsAppSDK.WinUI.targets')" Text="NuGet packages are missing. Restore them first (see README)." />
+    <Error Condition="!Exists('..\..\packages\Microsoft.Windows.CppWinRT.3.0.260818.1\build\native\Microsoft.Windows.CppWinRT.targets')" Text="NuGet packages are missing. Restore them first (see README)." />
+    <Error Condition="!Exists('..\..\packages\Microsoft.Windows.ImplementationLibrary.1.0.260126.7\build\native\Microsoft.Windows.ImplementationLibrary.targets')" Text="NuGet packages are missing. Restore them first (see README)." />
+  </Target>
+</Project>
