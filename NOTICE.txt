@@ -2,8 +2,8 @@ LAST PROJECTS PROJECT NOTICE
 
 Project: Claude Switcher
 Project description: A native Windows app that runs several Claude Desktop accounts side by side, each in its own separate session.
-Canonical project page: Not yet published
-Official distribution channel: The Releases page of the canonical project repository
+Canonical project page: https://github.com/xMags/Claude-Switcher
+Official distribution channel: https://github.com/xMags/Claude-Switcher/releases
 Operator and copyright owner: Debashis Das, operating under the Last Projects name
 Contact: info@lastprojects.com
 Effective date: 2026-10-22
