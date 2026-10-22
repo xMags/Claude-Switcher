@@ -64,6 +64,14 @@ namespace winrt::ClaudeSwitcher::implementation
         }
     }
 
+    void ProfilesPage::OnStartMenuShortcutClick(winrt::Windows::Foundation::IInspectable const& sender, [[maybe_unused]] Microsoft::UI::Xaml::RoutedEventArgs const& args)
+    {
+        if (auto const id = IdFromSender(sender); !id.empty())
+        {
+            m_viewModel.CreateStartMenuShortcut(id);
+        }
+    }
+
     void ProfilesPage::OnOpenFolderClick(winrt::Windows::Foundation::IInspectable const& sender, [[maybe_unused]] Microsoft::UI::Xaml::RoutedEventArgs const& args)
     {
         if (auto const id = IdFromSender(sender); !id.empty())

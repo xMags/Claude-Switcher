@@ -11,6 +11,8 @@ namespace ClaudeSwitcher::Core
         RoamingAppData,
         UserProfile,
         Desktop,
+        // The current user's Start Menu\Programs.
+        StartMenuPrograms,
     };
 
     // Throws std::system_error when the shell cannot resolve the folder.

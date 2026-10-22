@@ -5,6 +5,7 @@
 #include "Core/ClaudeInstallLocator.h"
 #include "Core/ProcessScanner.h"
 #include "Core/ProfileCatalog.h"
+#include "Core/ShortcutWriter.h"
 #include "ViewModels/StatusPoller.h"
 
 #include <winrt/Microsoft.UI.Dispatching.h>
@@ -55,6 +56,7 @@ namespace winrt::ClaudeSwitcher::implementation
         bool CanDeleteProfile(winrt::hstring const& id);
         void DeleteProfile(winrt::hstring const& id);
         void CreateDesktopShortcut(winrt::hstring const& id);
+        void CreateStartMenuShortcut(winrt::hstring const& id);
         void OpenDataFolder(winrt::hstring const& id);
 
         void RefreshRunningState();
@@ -78,6 +80,17 @@ namespace winrt::ClaudeSwitcher::implementation
             winrt::hstring const& title,
             winrt::hstring const& text);
         void EnsurePoller();
+
+        // Shortcuts. Only shortcuts whose arguments name exactly this
+        // profile's folder are treated as this app's to move or remove.
+        void CreateShortcut(winrt::hstring const& id, ::ClaudeSwitcher::Core::ShortcutLocation location);
+        [[nodiscard]] ::ClaudeSwitcher::Core::ShortcutSpec MakeShortcutSpec(
+            ::ClaudeSwitcher::Core::Profile const& profile,
+            ::ClaudeSwitcher::Core::ClaudeInstallation const& installation,
+            ::ClaudeSwitcher::Core::ShortcutLocation location) const;
+        [[nodiscard]] bool IsShortcutFor(std::filesystem::path const& shortcut, ::ClaudeSwitcher::Core::Profile const& profile) const;
+        void RemoveShortcuts(::ClaudeSwitcher::Core::Profile const& profile);
+        void RenameShortcuts(::ClaudeSwitcher::Core::Profile const& before, ::ClaudeSwitcher::Core::Profile const& after);
 
         [[nodiscard]] ::ClaudeSwitcher::Core::Profile const* FindProfile(winrt::hstring const& id) const;
         [[nodiscard]] std::optional<std::wstring> CardIdForSession(std::optional<std::wstring> const& userDataDir) const;

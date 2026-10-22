@@ -98,6 +98,7 @@
     <ClInclude Include="Shell\MainWindow.xaml.h">
       <DependentUpon>Shell\MainWindow.xaml</DependentUpon>
     </ClInclude>
+    <ClInclude Include="Shell\AppPaths.h" />
     <ClInclude Include="Shell\SingleInstanceGuard.h" />
     <ClInclude Include="ViewModels\ProfileCardViewModel.h" />
     <ClInclude Include="ViewModels\ProfilesViewModel.h" />
@@ -119,6 +120,7 @@
     <ClCompile Include="Shell\MainWindow.xaml.cpp">
       <DependentUpon>Shell\MainWindow.xaml</DependentUpon>
     </ClCompile>
+    <ClCompile Include="Shell\AppPaths.cpp" />
     <ClCompile Include="Shell\SingleInstanceGuard.cpp" />
     <ClCompile Include="ViewModels\ProfileCardViewModel.cpp" />
     <ClCompile Include="ViewModels\ProfilesViewModel.cpp" />

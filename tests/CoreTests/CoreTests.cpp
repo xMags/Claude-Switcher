@@ -424,6 +424,29 @@ namespace
         Require(core::SanitizeFileName(L"Work: A/B?") == L"Work_ A_B_", "forbidden characters are replaced");
         Require(core::SanitizeFileName(L"trailing. ") == L"trailing__", "trailing dots and spaces are replaced");
         Require(core::SanitizeFileName(L"Kunde · München") == L"Kunde · München", "ordinary names are kept");
+        Require(core::ShortcutFileNameFor(L"Work: A") == L"Claude (Work_ A).lnk", "shortcut names carry the profile name");
+        Require(core::ShortcutFolderFor(core::ShortcutLocation::StartMenu).filename() == L"Claude Profiles",
+                "Start menu shortcuts share one folder");
+    }
+
+    void TestShortcutFiles()
+    {
+        TemporaryFolder folder;
+        core::ShortcutSpec spec;
+        spec.Location = folder.Path() / L"nested" / core::ShortcutFileNameFor(L"Work");
+        spec.Target = LR"(C:\Windows\System32\notepad.exe)";
+        spec.Arguments = core::BuildClaudeArguments(std::filesystem::path{ LR"(C:\Users\Some One\ClaudeProfiles\work)" });
+        spec.Description = L"test";
+        spec.WorkingDirectory = folder.Path();
+        core::WriteShortcut(spec);
+
+        Require(std::filesystem::exists(spec.Location), "a shortcut is written, creating its folder");
+        Require(core::ReadShortcutArguments(spec.Location) == spec.Arguments, "shortcut arguments read back exactly");
+        Require(!core::ReadShortcutArguments(folder.Path() / L"missing.lnk"), "a missing shortcut has no arguments");
+
+        auto const notShortcut = folder.Path() / L"plain.lnk";
+        WriteBytes(notShortcut, "not a shortcut");
+        Require(!core::ReadShortcutArguments(notShortcut), "a file that is not a shortcut has no arguments");
     }
 
     struct TestCase
@@ -450,6 +473,7 @@ int wmain()
         { "catalog failures", TestCatalogFailuresLeaveNothingBehind },
         { "profiles root rules", TestRootRules },
         { "shortcut names", TestShortcutNames },
+        { "shortcut files", TestShortcutFiles },
     };
 
     auto failures = 0;

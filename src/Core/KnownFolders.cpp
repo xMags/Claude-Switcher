@@ -28,6 +28,8 @@ namespace ClaudeSwitcher::Core
                 return FOLDERID_Profile;
             case KnownFolder::Desktop:
                 return FOLDERID_Desktop;
+            case KnownFolder::StartMenuPrograms:
+                return FOLDERID_Programs;
             }
             return FOLDERID_LocalAppData;
         }

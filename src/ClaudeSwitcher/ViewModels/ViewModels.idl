@@ -44,6 +44,7 @@ namespace ClaudeSwitcher
         Boolean CanDeleteProfile(String id);
         void DeleteProfile(String id);
         void CreateDesktopShortcut(String id);
+        void CreateStartMenuShortcut(String id);
         void OpenDataFolder(String id);
 
         void RefreshRunningState();

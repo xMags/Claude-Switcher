@@ -4,6 +4,7 @@
 #include "MainWindow.g.cpp"
 #endif
 
+#include "Shell/AppPaths.h"
 #include "ViewModels/ProfilesViewModel.h"
 
 #include <microsoft.ui.xaml.window.h>
@@ -21,25 +22,6 @@ namespace winrt::ClaudeSwitcher::implementation
         // In effective pixels; scaled by the monitor's DPI.
         constexpr double InitialWidth = 940;
         constexpr double InitialHeight = 660;
-
-        std::filesystem::path ExecutableDirectory()
-        {
-            std::wstring path(MAX_PATH, L'\0');
-            for (;;)
-            {
-                auto const length = GetModuleFileNameW(nullptr, path.data(), static_cast<DWORD>(path.size()));
-                if (length == 0)
-                {
-                    return {};
-                }
-                if (length < path.size())
-                {
-                    path.resize(length);
-                    return std::filesystem::path{ path }.parent_path();
-                }
-                path.resize(path.size() * 2);
-            }
-        }
     }
 
     MainWindow::MainWindow(winrt::ClaudeSwitcher::ProfilesViewModel viewModel)
@@ -61,7 +43,7 @@ namespace winrt::ClaudeSwitcher::implementation
         winrt::get_self<ProfilesViewModel>(m_viewModel)->AttachOwnerWindow(window);
         ApplyInitialSize(window);
 
-        auto const icon = ExecutableDirectory() / L"Assets" / L"AppIcon.ico";
+        auto const icon = ::ClaudeSwitcher::Shell::BundledAppIcon();
         if (std::filesystem::exists(icon))
         {
             AppWindow().SetIcon(icon.wstring());

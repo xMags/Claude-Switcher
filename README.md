@@ -19,6 +19,11 @@ folder, so each one keeps its own sign-in, settings and MCP configuration.
 - The **Default** card is your existing Claude data. The switcher never moves
   or changes it.
 - Deleting a profile moves its folder to the Recycle Bin.
+- Each profile's menu can create a desktop shortcut or a Start menu entry
+  (`Start Menu\Programs\Claude Profiles`) that opens that profile directly,
+  without the switcher. Renaming a profile renames these shortcuts, and
+  deleting it removes them. Only shortcuts pointing at that profile's folder
+  are touched.
 
 ## Signing in to a new profile
 

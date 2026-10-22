@@ -10,6 +10,7 @@
 #include "Core/ProfileFolders.h"
 #include "Core/ShortcutWriter.h"
 #include "Core/SystemError.h"
+#include "Shell/AppPaths.h"
 #include "ViewModels/ProfileCardViewModel.h"
 
 #include <shellapi.h>
@@ -221,6 +222,13 @@ namespace winrt::ClaudeSwitcher::implementation
         winrt::hstring const& note,
         winrt::hstring const& accentColor)
     {
+        auto const existing = FindProfile(id);
+        if (existing == nullptr)
+        {
+            return DescribeEditError(core::ProfileEditError::NotFound, m_catalog->ProfilesRootProblem());
+        }
+        auto const before = *existing;
+
         try
         {
             auto const error = m_catalog->Update(id, { std::wstring{ name }, std::wstring{ note }, std::wstring{ accentColor } });
@@ -234,6 +242,10 @@ namespace winrt::ClaudeSwitcher::implementation
             return L"The profile could not be saved: " + DescribeError(error);
         }
 
+        if (auto const after = FindProfile(id); after != nullptr && after->Name != before.Name)
+        {
+            RenameShortcuts(before, *after);
+        }
         RebuildCards();
         return {};
     }
@@ -290,21 +302,8 @@ namespace winrt::ClaudeSwitcher::implementation
             return;
         }
 
-        // A shortcut left behind would quietly recreate the folder. Only the
-        // one this app made for exactly this folder is removed.
-        auto const expectedArguments = core::BuildClaudeArguments(folder);
-        try
-        {
-            auto const shortcut = core::DesktopShortcutPathFor(profile.Name);
-            if (core::ReadShortcutArguments(shortcut) == expectedArguments)
-            {
-                static_cast<void>(DeleteFileW(shortcut.c_str()));
-            }
-        }
-        catch (std::system_error const&)
-        {
-            // The profile is gone either way; a stale shortcut is harmless to leave.
-        }
+        // A shortcut left behind would quietly recreate the folder.
+        RemoveShortcuts(profile);
 
         RebuildCards();
         Raise(L"EmptyHintVisibility");
@@ -315,6 +314,16 @@ namespace winrt::ClaudeSwitcher::implementation
     }
 
     void ProfilesViewModel::CreateDesktopShortcut(winrt::hstring const& id)
+    {
+        CreateShortcut(id, core::ShortcutLocation::Desktop);
+    }
+
+    void ProfilesViewModel::CreateStartMenuShortcut(winrt::hstring const& id)
+    {
+        CreateShortcut(id, core::ShortcutLocation::StartMenu);
+    }
+
+    void ProfilesViewModel::CreateShortcut(winrt::hstring const& id, core::ShortcutLocation location)
     {
         auto const profile = FindProfile(id);
         if (profile == nullptr)
@@ -329,21 +338,111 @@ namespace winrt::ClaudeSwitcher::implementation
 
         try
         {
-            core::ShortcutSpec spec;
-            spec.Location = core::DesktopShortcutPathFor(profile->Name);
-            spec.Target = installation->AliasPath;
-            spec.Arguments = core::BuildClaudeArguments(m_catalog->DataDirectoryFor(*profile));
-            spec.Description = L"Open Claude with the " + profile->Name + L" profile";
-            spec.WorkingDirectory = core::GetKnownFolderPath(core::KnownFolder::UserProfile);
+            auto const spec = MakeShortcutSpec(*profile, *installation, location);
             core::WriteShortcut(spec);
-            ShowMessage(
-                InfoBarSeverity::Success,
-                L"Shortcut added",
-                winrt::hstring{ spec.Location.stem().wstring() } + L" is on your desktop.");
+            auto const shortcutName = winrt::hstring{ spec.Location.stem().wstring() };
+            if (location == core::ShortcutLocation::StartMenu)
+            {
+                ShowMessage(
+                    InfoBarSeverity::Success,
+                    L"Added to Start",
+                    shortcutName + L" is in Start under All apps > Claude Profiles. Right-click it there to pin it.");
+            }
+            else
+            {
+                ShowMessage(InfoBarSeverity::Success, L"Shortcut added", shortcutName + L" is on your desktop.");
+            }
         }
         catch (std::system_error const& error)
         {
             ShowMessage(InfoBarSeverity::Error, L"Couldn't create the shortcut", DescribeError(error));
+        }
+    }
+
+    core::ShortcutSpec ProfilesViewModel::MakeShortcutSpec(
+        core::Profile const& profile,
+        core::ClaudeInstallation const& installation,
+        core::ShortcutLocation location) const
+    {
+        core::ShortcutSpec spec;
+        spec.Location = core::ShortcutPathFor(location, profile.Name);
+        spec.Target = installation.AliasPath;
+        spec.Arguments = core::BuildClaudeArguments(m_catalog->DataDirectoryFor(profile));
+        spec.Description = L"Open Claude with the " + profile.Name + L" profile";
+        spec.WorkingDirectory = core::GetKnownFolderPath(core::KnownFolder::UserProfile);
+        spec.IconPath = ::ClaudeSwitcher::Shell::EnsureShortcutIcon();
+        return spec;
+    }
+
+    bool ProfilesViewModel::IsShortcutFor(std::filesystem::path const& shortcut, core::Profile const& profile) const
+    {
+        // Matching on the exact folder argument means only shortcuts this
+        // app made for this profile are ever moved or removed.
+        return core::ReadShortcutArguments(shortcut) == core::BuildClaudeArguments(m_catalog->DataDirectoryFor(profile));
+    }
+
+    void ProfilesViewModel::RemoveShortcuts(core::Profile const& profile)
+    {
+        for (auto const location : core::AllShortcutLocations)
+        {
+            try
+            {
+                auto const shortcut = core::ShortcutPathFor(location, profile.Name);
+                if (IsShortcutFor(shortcut, profile))
+                {
+                    static_cast<void>(DeleteFileW(shortcut.c_str()));
+                }
+                if (location == core::ShortcutLocation::StartMenu)
+                {
+                    // Succeeds only once the folder is empty.
+                    static_cast<void>(RemoveDirectoryW(core::ShortcutFolderFor(location).c_str()));
+                }
+            }
+            catch (std::system_error const&)
+            {
+                // The profile is gone either way; a stale shortcut is harmless to leave.
+            }
+        }
+    }
+
+    void ProfilesViewModel::RenameShortcuts(core::Profile const& before, core::Profile const& after)
+    {
+        auto const installation = RefreshInstallation(false);
+        for (auto const location : core::AllShortcutLocations)
+        {
+            try
+            {
+                auto const oldPath = core::ShortcutPathFor(location, before.Name);
+                if (!IsShortcutFor(oldPath, before))
+                {
+                    continue;
+                }
+                auto const newPath = core::ShortcutPathFor(location, after.Name);
+                auto const samePath = core::PathsReferToSameLocation(oldPath.wstring(), newPath.wstring());
+                // Never replace a different file that already has the new name.
+                if (!samePath && GetFileAttributesW(newPath.c_str()) != INVALID_FILE_ATTRIBUTES && !IsShortcutFor(newPath, after))
+                {
+                    continue;
+                }
+
+                if (installation)
+                {
+                    core::WriteShortcut(MakeShortcutSpec(after, *installation, location));
+                    if (!samePath)
+                    {
+                        static_cast<void>(DeleteFileW(oldPath.c_str()));
+                    }
+                }
+                else if (!samePath)
+                {
+                    // Claude can't be found right now; keep the shortcut as it is, under the new name.
+                    static_cast<void>(MoveFileExW(oldPath.c_str(), newPath.c_str(), MOVEFILE_REPLACE_EXISTING));
+                }
+            }
+            catch (std::system_error const&)
+            {
+                // The old shortcut still works; it just keeps the old name.
+            }
         }
     }
 

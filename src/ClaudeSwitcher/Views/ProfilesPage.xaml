@@ -118,6 +118,15 @@
                                         <FontIcon Glyph="&#xE71B;" />
                                     </MenuFlyoutItem.Icon>
                                 </MenuFlyoutItem>
+                                <MenuFlyoutItem
+                                    Click="OnStartMenuShortcutClick"
+                                    Tag="{x:Bind Id}"
+                                    Text="Add to Start menu"
+                                    Visibility="{x:Bind ManageVisibility}">
+                                    <MenuFlyoutItem.Icon>
+                                        <FontIcon Glyph="&#xE8A9;" />
+                                    </MenuFlyoutItem.Icon>
+                                </MenuFlyoutItem>
                                 <MenuFlyoutItem Click="OnOpenFolderClick" Tag="{x:Bind Id}" Text="Open data folder">
                                     <MenuFlyoutItem.Icon>
                                         <FontIcon Glyph="&#xE838;" />

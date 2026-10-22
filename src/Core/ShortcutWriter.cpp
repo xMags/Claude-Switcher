@@ -9,6 +9,8 @@
 
 #include <wil/com.h>
 
+#include <system_error>
+
 #pragma comment(lib, "ole32.lib")
 #pragma comment(lib, "uuid.lib")
 
@@ -31,14 +33,37 @@ namespace ClaudeSwitcher::Core
         return sanitized.empty() ? std::wstring{ L"_" } : sanitized;
     }
 
-    std::filesystem::path DesktopShortcutPathFor(std::wstring_view profileName)
+    std::wstring ShortcutFileNameFor(std::wstring_view profileName)
     {
-        auto const fileName = L"Claude (" + SanitizeFileName(profileName) + L").lnk";
-        return GetKnownFolderPath(KnownFolder::Desktop) / fileName;
+        return L"Claude (" + SanitizeFileName(profileName) + L").lnk";
+    }
+
+    std::filesystem::path ShortcutFolderFor(ShortcutLocation location)
+    {
+        switch (location)
+        {
+        case ShortcutLocation::Desktop:
+            return GetKnownFolderPath(KnownFolder::Desktop);
+        case ShortcutLocation::StartMenu:
+            return GetKnownFolderPath(KnownFolder::StartMenuPrograms) / L"Claude Profiles";
+        }
+        return GetKnownFolderPath(KnownFolder::Desktop);
+    }
+
+    std::filesystem::path ShortcutPathFor(ShortcutLocation location, std::wstring_view profileName)
+    {
+        return ShortcutFolderFor(location) / ShortcutFileNameFor(profileName);
     }
 
     void WriteShortcut(ShortcutSpec const& spec)
     {
+        std::error_code folderError;
+        std::filesystem::create_directories(spec.Location.parent_path(), folderError);
+        if (folderError)
+        {
+            throw std::system_error(folderError, "Creating the shortcut folder");
+        }
+
         wil::com_ptr_nothrow<IShellLinkW> link;
         ThrowIfFailed(
             CoCreateInstance(CLSID_ShellLink, nullptr, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&link)),
@@ -47,6 +72,10 @@ namespace ClaudeSwitcher::Core
         ThrowIfFailed(link->SetArguments(spec.Arguments.c_str()), "Setting the shortcut arguments");
         ThrowIfFailed(link->SetDescription(spec.Description.c_str()), "Setting the shortcut description");
         ThrowIfFailed(link->SetWorkingDirectory(spec.WorkingDirectory.c_str()), "Setting the shortcut folder");
+        if (!spec.IconPath.empty())
+        {
+            ThrowIfFailed(link->SetIconLocation(spec.IconPath.c_str(), 0), "Setting the shortcut icon");
+        }
 
         auto const file = link.try_query<IPersistFile>();
         if (!file)
