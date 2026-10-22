@@ -17,6 +17,12 @@
 </p>
 
 <p align="center">
+  <a href="../../releases/latest">
+    <img alt="Download latest release" src="docs/images/download-latest-release.svg" />
+  </a>
+</p>
+
+<p align="center">
   <img src="docs/images/home.png" width="720" alt="Claude Switcher home page with the Default profile card" />
 </p>
 

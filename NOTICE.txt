@@ -3,7 +3,7 @@ LAST PROJECTS PROJECT NOTICE
 Project: Claude Switcher
 Project description: A native Windows app that runs several Claude Desktop accounts side by side, each in its own separate session.
 Canonical project page: Not yet published
-Official distribution channel: Not applicable
+Official distribution channel: The Releases page of the canonical project repository
 Operator and copyright owner: Debashis Das, operating under the Last Projects name
 Contact: info@lastprojects.com
 Effective date: 2026-10-22
