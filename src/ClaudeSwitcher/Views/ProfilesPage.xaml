@@ -112,8 +112,7 @@
                                 <MenuFlyoutItem
                                     Click="OnShortcutClick"
                                     Tag="{x:Bind Id}"
-                                    Text="Create desktop shortcut"
-                                    Visibility="{x:Bind ManageVisibility}">
+                                    Text="Create desktop shortcut">
                                     <MenuFlyoutItem.Icon>
                                         <FontIcon Glyph="&#xE71B;" />
                                     </MenuFlyoutItem.Icon>

@@ -27,6 +27,8 @@ namespace winrt::ClaudeSwitcher::implementation
         using Microsoft::UI::Xaml::Controls::InfoBarSeverity;
 
         constexpr wchar_t DefaultCardId[] = L"default";
+        // Reserved, so no profile can share it (or its shortcut file name).
+        constexpr wchar_t DefaultCardName[] = L"Default";
         constexpr wchar_t DefaultCardColor[] = L"#D97757";
         constexpr std::chrono::seconds MessageLifetime{ 6 };
 
@@ -327,10 +329,19 @@ namespace winrt::ClaudeSwitcher::implementation
 
     void ProfilesViewModel::CreateShortcut(winrt::hstring const& id, core::ShortcutLocation location)
     {
-        auto const profile = FindProfile(id);
-        if (profile == nullptr)
+        // The Default card's shortcut opens Claude with no profile folder,
+        // that is, with the user's existing account.
+        std::wstring name{ DefaultCardName };
+        std::optional<std::filesystem::path> dataDirectory;
+        if (id != DefaultCardId)
         {
-            return;
+            auto const profile = FindProfile(id);
+            if (profile == nullptr)
+            {
+                return;
+            }
+            name = profile->Name;
+            dataDirectory = m_catalog->DataDirectoryFor(*profile);
         }
         auto const installation = RefreshInstallation(true);
         if (!installation)
@@ -340,7 +351,7 @@ namespace winrt::ClaudeSwitcher::implementation
 
         try
         {
-            auto const spec = MakeShortcutSpec(*profile, *installation, location);
+            auto const spec = MakeShortcutSpec(name, dataDirectory, *installation, location);
             core::WriteShortcut(spec);
             auto const shortcutName = winrt::hstring{ spec.Location.stem().wstring() };
             if (location == core::ShortcutLocation::StartMenu)
@@ -362,15 +373,16 @@ namespace winrt::ClaudeSwitcher::implementation
     }
 
     core::ShortcutSpec ProfilesViewModel::MakeShortcutSpec(
-        core::Profile const& profile,
+        std::wstring const& name,
+        std::optional<std::filesystem::path> const& dataDirectory,
         core::ClaudeInstallation const& installation,
         core::ShortcutLocation location) const
     {
         core::ShortcutSpec spec;
-        spec.Location = core::ShortcutPathFor(location, profile.Name);
+        spec.Location = core::ShortcutPathFor(location, name);
         spec.Target = installation.AliasPath;
-        spec.Arguments = core::BuildClaudeArguments(m_catalog->DataDirectoryFor(profile));
-        spec.Description = L"Open Claude with the " + profile.Name + L" profile";
+        spec.Arguments = core::BuildClaudeArguments(dataDirectory);
+        spec.Description = dataDirectory ? L"Open Claude with the " + name + L" profile" : L"Open Claude with your existing account";
         spec.WorkingDirectory = core::GetKnownFolderPath(core::KnownFolder::UserProfile);
         spec.IconPath = ::ClaudeSwitcher::Shell::EnsureShortcutIcon();
         return spec;
@@ -429,7 +441,7 @@ namespace winrt::ClaudeSwitcher::implementation
 
                 if (installation)
                 {
-                    core::WriteShortcut(MakeShortcutSpec(after, *installation, location));
+                    core::WriteShortcut(MakeShortcutSpec(after.Name, m_catalog->DataDirectoryFor(after), *installation, location));
                     if (!samePath)
                     {
                         static_cast<void>(DeleteFileW(oldPath.c_str()));
@@ -609,7 +621,7 @@ namespace winrt::ClaudeSwitcher::implementation
         auto const canLaunch = m_install.Status == core::InstallStatus::Found;
         std::vector<winrt::ClaudeSwitcher::ProfileCardViewModel> cards;
         cards.push_back(winrt::make<ProfileCardViewModel>(
-            winrt::hstring{ DefaultCardId }, L"Default", L"Your existing Claude account", winrt::hstring{ DefaultCardColor }, true));
+            winrt::hstring{ DefaultCardId }, winrt::hstring{ DefaultCardName }, L"Your existing Claude account", winrt::hstring{ DefaultCardColor }, true));
         for (auto const& profile : m_catalog->Profiles())
         {
             cards.push_back(winrt::make<ProfileCardViewModel>(

@@ -88,8 +88,10 @@ namespace winrt::ClaudeSwitcher::implementation
         // Shortcuts. Only shortcuts whose arguments name exactly this
         // profile's folder are treated as this app's to move or remove.
         void CreateShortcut(winrt::hstring const& id, ::ClaudeSwitcher::Core::ShortcutLocation location);
+        // No data directory means the Default session.
         [[nodiscard]] ::ClaudeSwitcher::Core::ShortcutSpec MakeShortcutSpec(
-            ::ClaudeSwitcher::Core::Profile const& profile,
+            std::wstring const& name,
+            std::optional<std::filesystem::path> const& dataDirectory,
             ::ClaudeSwitcher::Core::ClaudeInstallation const& installation,
             ::ClaudeSwitcher::Core::ShortcutLocation location) const;
         [[nodiscard]] bool IsShortcutFor(std::filesystem::path const& shortcut, ::ClaudeSwitcher::Core::Profile const& profile) const;
