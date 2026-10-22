@@ -1,0 +1,47 @@
+LAST PROJECTS PROJECT NOTICE
+
+Project: Claude Switcher
+Project description: A native Windows app that runs several Claude Desktop accounts side by side, each in its own separate session.
+Canonical project page: Not yet published
+Official distribution channel: Not applicable
+Operator and copyright owner: Debashis Das, operating under the Last Projects name
+Contact: info@lastprojects.com
+Effective date: 2026-10-22
+
+CLASSIFICATION
+
+[x] SOURCE AVAILABLE
+The project materials identified in this notice are licensed under the Last
+Projects License Version 1.0. This is a source-available license, not an
+open-source license. The full license is provided in LICENSE.
+
+TERMS
+
+The Last Projects Universal Terms and Conditions Version 1.0 apply to the
+official product, website, hosted service, API, bot, account, download,
+documentation, and other offering identified above, to the extent applicable.
+They are provided in TERMS-AND-CONDITIONS.md.
+
+OPEN-SOURCE AND THIRD-PARTY RIGHTS
+
+Nothing in the Last Projects Universal Terms and Conditions removes, limits,
+or replaces rights granted under an applicable open-source or third-party
+license. If those terms conflict with the license governing particular code or
+a third-party component, that license controls for that code or component.
+
+PROJECT-SPECIFIC TERMS
+
+Claude Switcher is an independent project. It is not affiliated with,
+endorsed by, or sponsored by Anthropic. "Claude" is a trademark of Anthropic,
+PBC, used here only to identify the software Claude Switcher works with. Use of
+Claude Desktop and Claude accounts remains subject to Anthropic's own terms.
+
+PRIVACY
+
+Privacy notice: No personal data is intentionally collected. Claude Switcher
+stores its profile list and preferences only on the user's own computer and
+sends nothing over the network.
+
+By installing, accessing, creating an account for, or using the official
+offering after receiving reasonable notice of the applicable terms, the user
+agrees to those terms to the extent permitted by law.

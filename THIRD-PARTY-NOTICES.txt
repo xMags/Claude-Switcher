@@ -1,0 +1,44 @@
+CLAUDE SWITCHER - THIRD-PARTY NOTICES
+
+Claude Switcher is built with, and its build output includes, third-party
+software. Those components are governed by their own terms, not the Last
+Projects License.
+
+Copies of the license and notice files supplied by the restored NuGet packages
+are stored in:
+
+  licenses/third-party/
+
+The notice bundle covers the dependency versions declared in
+src/ClaudeSwitcher/packages.config whose code ships with the application,
+either as runtime libraries in the build output or as headers compiled into it:
+
+  Microsoft.Web.WebView2 1.0.3719.77
+  Microsoft.Windows.CppWinRT 3.0.260818.1
+  Microsoft.Windows.ImplementationLibrary 1.0.260126.7
+  Microsoft.WindowsAppSDK.Base 2.0.4
+  Microsoft.WindowsAppSDK.DWrite 2.1.0
+  Microsoft.WindowsAppSDK.Foundation 2.3.9
+  Microsoft.WindowsAppSDK.InteractiveExperiences 2.1.6
+  Microsoft.WindowsAppSDK.Runtime 2.4.0
+  Microsoft.WindowsAppSDK.WinUI 2.3.6
+
+The remaining build-time packages (Microsoft.Windows.SDK.BuildTools and
+Microsoft.Windows.SDK.BuildTools.MSIX) are used to compile the application and
+do not ship with it.
+
+Some Microsoft packages include software from additional authors. Their full
+attributions and license texts appear in the corresponding NOTICE or
+ThirdPartyNotices files in licenses/third-party. Do not remove those files from
+a redistributed release.
+
+Claude Desktop is not part of this software. Claude Switcher starts the copy of
+Claude Desktop that is already installed on the user's computer and does not
+include, modify, or redistribute any part of it. "Claude" and "Anthropic" are
+trademarks of Anthropic, PBC. Claude Switcher is an independent project and is
+not affiliated with, endorsed by, or sponsored by Anthropic.
+
+No endorsement by any third-party author or licensor is implied.
+
+When a dependency version changes, refresh this notice bundle from the exact
+restored dependency before publishing a release.
